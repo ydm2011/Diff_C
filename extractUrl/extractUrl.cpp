@@ -356,22 +356,22 @@ int ExtractUrlFromSo::getUrls(const char* src,size_t src_len,
     size_t curr_iter=0;
     size_t next_iter=0;
 
+    list<TagNode>::iterator iter = layer_nodes.begin();
     //get the search result div
-    getSearchResultContainer(src,src_len,next_iter,layer_nodes.front());
+    getSearchResultContainer(src,src_len,next_iter,*iter);
     if(next_iter==curr_iter)
         return -1;
-    layer_nodes.pop_front();
+    ++iter;
     src += next_iter;
     src_len -= next_iter;
     curr_iter += next_iter;
     //get the position of the result list;
     bool is_last = false;
     string temp_url;
-    TagNode node = layer_nodes.front();
-    layer_nodes.pop_front();
+
     while(!is_last)
     {
-        if(extractUrl(src,src_len,node,is_last,temp_url,next_iter)==-1)
+        if(extractUrl(src,src_len,*iter,is_last,temp_url,next_iter)==-1)
             return -1;
         urls.push_back(temp_url);
         src += next_iter;
