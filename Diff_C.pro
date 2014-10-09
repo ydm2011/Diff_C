@@ -7,13 +7,16 @@ QMAKE_CXXFLAGS += -std=c++11
 SOURCES += main.cpp \
     util/util.cpp \
     memcached/encaplibmemcache.cpp \
-    extractUrl/extractUrl.cpp
+    extractUrl/extractUrl.cpp \
+    getweb/getweb.cpp
 
 HEADERS += \
     util/util.h \
     memcached/encaplibmemcache.h \
     extractUrl/getDifferenceList.h \
-    extractUrl/extractUrl.h
+    extractUrl/extractUrl.h \
+    getweb/getweb.h \
+    getweb/my_atomic.h
 
 
 
