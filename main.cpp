@@ -6,10 +6,88 @@
 #include <ctime>
 using namespace std;
 
-int main()
+int upLoadMemcache(ExtractUrlInterface* extract,
+                   const string& query_path,
+                   const string& result_path,
+                   const string& source_flag,
+                   EncapLibMemcached& mem)
 {
     //test so.com
     ifstream in;
+    ifstream in_result;
+
+    in.open(query_path.c_str(),ios::in);
+    if(!in)
+    {
+        std::cout<<query_path<<" Not Found!"<<endl;
+        return -1;
+    }
+
+
+    string contents;
+    string complete_path;
+
+    string tmp_key;
+    string format_urls;
+    list<string> urls;
+    while(!in.eof())
+    {
+
+        in>>tmp_key;
+        //querys.push_back(string(buffer,256));
+        cout<<tmp_key<<endl;
+        //tmp_key = "美女qq号码"；
+        complete_path = result_path + tmp_key;
+        cout<<complete_path<<endl;
+        in_result.open(complete_path.c_str(),ios::in|ios::binary);
+        if(!in_result)
+        {
+            std::cout<<complete_path.c_str()<<endl;
+            return -1;
+        }
+        in_result.seekg(0,ios::end);
+        contents.resize(in.tellg());
+        in_result.seekg(0,ios::beg);
+        in_result.read(&contents[0],contents.size());
+        in_result.close();
+
+        extract->getUrls(contents.c_str(),contents.size(),"<h3",urls);
+        format_urls = tmp_key;
+        format_urls += ":";
+        while(!urls.empty())
+        {
+            format_urls = urls.front()+",";
+        }
+        format_urls.pop_back();
+        mem.set(tmp_key+source_flag,format_urls);
+    }
+    in.close();
+    return 0;
+}
+
+int main()
+{
+    string query_path = "/home/daoming/Desktop/200keys/200keys.txt";
+    string result_path = "/home/daoming/Desktop/www.so.com.new/";
+    string source_flag = "_360";
+
+    ExtractContentInterface * algorithm = new ExtractBySunday;
+    EncapLibMemcached mem;
+    ExtractUrlInterface *extract = new ExtractUrlFromSo(algorithm);
+
+    upLoadMemcache(extract,query_path,result_path,source_flag,mem);
+}
+
+
+/*
+int main()
+{
+    ExtractBySunday *extract = new ExtractBySunday;
+    ExtractUrlFromSo extract_so(extract);
+
+    //test so.com
+    ifstream in;
+
 
     in.open("/home/daoming/Desktop/index.html",ios::in|ios::binary);
     if(!in)
@@ -23,11 +101,6 @@ int main()
     in.seekg(0,ios::beg);
     in.read(&contents[0],contents.size());
     in.close();
-
-
-
-    ExtractBySunday *extract = new ExtractBySunday;
-    ExtractUrlFromSo extract_so(extract);
 
     list<string> urls;
     extract_so.getUrls(contents.c_str(),contents.size(),"<h3",urls);
@@ -56,3 +129,4 @@ int main()
 
     return 0;
 }
+*/
