@@ -228,7 +228,7 @@ const MemManipulateParam& EncapLibMemcached::get_configurtaion()
  * this function will fecch one result from the server
  */
 int EncapLibMemcached:: get(const string& key,
-                                    shared_ptr<char>& returnResult)
+                            shared_ptr<char>& returnResult)
 {
     size_t value_length;
     uint32_t flags;

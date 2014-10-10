@@ -118,6 +118,7 @@ public:
 class OutputDate
 {
 public:
+    OutputDate():pwebinfo(0){}
 	~OutputDate()
 	{
 		if(pwebinfo)
@@ -130,44 +131,42 @@ public:
 	string url;
 	char* pwebinfo;
 	int webinfo_len;
-	inline void init(WebInfo* webinfo)
+    void init(WebInfo* webinfo)
 	{
 		key = webinfo->key;
 		url = webinfo->url;
 		webinfo_len = webinfo->webinfo_len;
-		if(!webinfo->pwebinfo)
+        if(webinfo->pwebinfo)
 		{
 			pwebinfo = new char[webinfo_len];
 			if(pwebinfo)
 			{
-				if(webinfo->buf)
-				{
-					memcpy(pwebinfo,webinfo->buf,webinfo_len);
-				}
-				else
-				{
-					delete[] pwebinfo;
-					pwebinfo = NULL;
-					//exit(-8);
-				}
-			}
-			else
+                memcpy(pwebinfo,webinfo->pwebinfo,webinfo_len);
+            }
+            else
 			{
 				//Application memory failure
 				exit(-9);
 			}
 		}
-		else
-		{
-			pwebinfo = webinfo->pwebinfo;
-			webinfo->pwebinfo = NULL;
-		}
-	}
-	
-	
+        if(webinfo->buf)
+        {
+            pwebinfo = new char[webinfo_len];
+            if(pwebinfo)
+            {
+                memcpy(pwebinfo,webinfo->buf,webinfo_len);
+            }
+            else
+            {
+                //Application memory failure
+                exit(-9);
+            }
+        }
+	}	
 };
 typedef list<OutputDate> OutputdateList;
 
+//普通锁
 class MyLocalLock
 {
 private:
@@ -187,6 +186,7 @@ private:
 	MyLocalLock& operator= (const MyLocalLock& ml);
 };
 
+// 读写锁
 class MyLocalRLock
 {
 private:
@@ -249,7 +249,7 @@ typedef struct engineparam
 	engineparam()
 	:keyfilepath(""),urlfilepath(""),urlparam("")
 	,memcachedhostaddr(""),keynum(2000)
-	,HZ(10),sendtomemcached(false)
+    ,HZ(10),sendtomemcached(false),savewebinfo(false)
 	,port(80)
 	{}
 	string keyfilepath;
@@ -260,6 +260,7 @@ typedef struct engineparam
 	int keynum;
 	int  HZ;
 	bool sendtomemcached;
+    bool savewebinfo;
 }Engineparam;
 
 typedef list<string> UrlList;
@@ -359,6 +360,7 @@ private:
 	my_atmic m_webinfonum;
 	
 	bool m_sendtomem;
+    bool m_savewebinfo;
 	bool m_finished;
 	//WebInfo* pwebinfo;
 	enum 

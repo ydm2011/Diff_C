@@ -7,93 +7,43 @@
 #include <ctime>
 using namespace std;
 GetWeb gb;
-int upLoadMemcache(ExtractUrlInterface* extract,
-                   const string& query_path,
-                   const string& result_path,
-                   const string& source_flag,
+int upLoadMemcache(const string& query_key,
+                   const list<string>& urls_list,
+                   const string& store_flag,
                    EncapLibMemcached& mem)
 {
-    //test so.com
-    ifstream in;
-    ifstream in_result;
-
-    in.open(query_path.c_str(),ios::in);
-    if(!in)
+    string format_urls = query_key;
+    format_urls += ":";
+    list<string>::const_iterator iter = urls_list.begin();
+    while(iter!=urls_list.end())
     {
-        std::cout<<query_path<<" Not Found!"<<endl;
+        format_urls += urls_list.front()+",";
+        iter++;
+    }
+    format_urls.pop_back();
+    string store_key = query_key + store_flag;
+    if(mem.set(store_key,format_urls)!=MEM_SUCCESS)
+    {
+        cout<<"memcached failed!"<<endl;
         return -1;
     }
-
-
-    string contents;
-    string complete_path;
-
-    string tmp_key;
-    string store_key;
-    string format_urls;
-    list<string> urls;
-    while(!in.eof())
-    {
-
-        contents.clear();
-        urls.clear();
-        format_urls.clear();
-
-        in>>tmp_key;
-        //querys.push_back(string(buffer,256));
-        cout<<tmp_key<<endl;
-        complete_path = result_path + tmp_key;
-        //complete_path.pop_back();
-        cout<<complete_path<<endl;
-        in_result.open(complete_path.c_str(),ios::in|ios::binary);
-        if(!in_result)
-        {
-            std::cout<<complete_path.c_str()<<endl;
-            return -1;
-        }
-        in_result.seekg(0,ios::end);
-        cout<<in_result.tellg()<<endl;
-        contents.resize(in_result.tellg());
-        in_result.seekg(0,ios::beg);
-        in_result.read(&contents[0],contents.size());
-        in_result.close();
-
-        extract->getUrls(contents.c_str(),contents.size(),"<h3",urls);
-        format_urls = tmp_key;
-        format_urls += ":";
-        while(!urls.empty())
-        {
-            format_urls += urls.front()+",";
-            urls.pop_front();
-        }
-        format_urls.pop_back();
-        store_key = tmp_key + source_flag;
-
-        if(mem.set(store_key,format_urls)!=MEM_SUCCESS)
-        {
-            cout<<"memcached failed!"<<endl;
-            return -1;
-        }
-        shared_ptr<char> result;
-        mem.get(store_key,result);
-        cout<<result<<endl;
-    }
-    in.close();
     return 0;
 }
 
 int main()
 {
-    string query_path = "/home/daoming/Desktop/200keys/200keys.txt";
-    string result_path = "/home/daoming/Desktop/www.so.com.new/";
+    string query_path = "/home/daoming/Qtproject/Diff_C/getweb/key.txt";
+    string url_path = "/home/daoming/Qtproject/Diff_C/getweb/url.txt";
     string source_flag = "_360";
 
+    // getweb configure
     Engineparam engineparam;
-    engineparam.keyfilepath = "key.txt";
-    engineparam.urlfilepath = "url.txt";
-    engineparam.keynum = 200;
-    engineparam.memcachedhostaddr = "--SERVER=test2.se.gzst.qihoo.net:11211";
-    engineparam.sendtomemcached = false;
+    engineparam.keyfilepath = query_path;
+    engineparam.urlfilepath = url_path;
+    engineparam.keynum = 20;
+    engineparam.memcachedhostaddr = "--SERVER=localhost:11211";
+    engineparam.sendtomemcached = true;
+    engineparam.savewebinfo = true;
     engineparam.HZ = 10;
     engineparam.urlparam = "";
     engineparam.port = 80;
@@ -101,20 +51,44 @@ int main()
     gb.init(engineparam);
     //gb.ctrl_run(10);
     gb.run(1);
-    int i = 0;
 
     while(!gb.finish())
     {
-
         sleep(10);
-
     }
-
+    /*
+    OutputdateList dates = gb.GetOutDateManager().GetWebinfoBykey("美女qq号码");
+        for(OutputdateList::iterator beg = dates.begin();
+            beg != dates.end(); ++beg)
+        {
+            cout<<beg->pwebinfo<<endl;
+        }
+   */
+    //extract the urls
     ExtractContentInterface * algorithm = new ExtractBySunday;
     EncapLibMemcached mem;
     ExtractUrlInterface *extract = new ExtractUrlFromSo(algorithm);
+    //string contents;
 
-    upLoadMemcache(extract,query_path,result_path,source_flag,mem);
+    ifstream query_file;
+    string tmp_key;
+    query_file.open(query_path,ios::in|ios::binary);
+    shared_ptr<char> contents;
+    list<string> urls;
+    for(int i=0;i<engineparam.keynum; ++i)
+    {
+        query_file>>tmp_key;
+        mem.get(tmp_key,contents);
+        extract->getUrls(contents.get(),strlen(contents.get()),"<h3 ",urls);
+        upLoadMemcache(tmp_key,urls,source_flag,mem);
+    }
+
+    //diff
+
+
+    //judge
+
+
 
     return 0;
 }

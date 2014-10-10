@@ -79,7 +79,7 @@ GetWeb::GetWeb()
 
 GetWeb::GetWeb(const GetWeb& other)
 {
-
+    ;
 }
 
 GetWeb::~GetWeb()
@@ -124,7 +124,7 @@ void GetWeb::run(int num)
 	{
 		cout<<"attribute create failed\n";
 	}
-	res = pthread_attr_setdetachstate(&thread_attr,PTHREAD_CREATE_DETACHED);
+    res = pthread_attr_setdetxachstate(&thread_attr,PTHREAD_CREATE_DETACHED);
 	if(0 != res)
 	{
 		cout<<"setting detached attribute failed\n";
@@ -176,6 +176,7 @@ void GetWeb::init(Engineparam engparam )
 	m_urlparam = engparam.urlparam;
 	m_HZ = engparam.HZ;
 	m_sendtomem = engparam.sendtomemcached;
+    m_savewebinfo = engparam.savewebinfo;
 	m_port = engparam.port;
 	
 	readkeyfile();
@@ -312,7 +313,10 @@ void* GetWeb::PthreadFun(void*)
 				webinfo->buf = buf;
 				RecvData(webinfo);
 				//AddPutDate(webinfo);
-				//m_outdatemanager.AddOutdate(webinfo);
+                if(m_savewebinfo)
+                {
+                    m_outdatemanager.AddOutdate(webinfo);
+                }
 				if(m_sendtomem)
 				{
 					AddWebinfoToMemcached(webinfo);
@@ -376,11 +380,11 @@ void GetWeb::Gethost(string url, HostInfo& hostinfo)
     cadd.sin_addr.s_addr = *((unsigned long*)pURL->h_addr_list[0]);
     cadd.sin_port = htons(m_port);
 	strcpy(hostinfo.GET,GET);
-	strcpy(hostinfo.host,host);
-	
+    strcpy(hostinfo.host,host);
 }
 
 WebInfo* GetWeb::GetWebinfo()
+
 {
 	MyLocalWLock mywlock(&m_webinfo_rwlock);
 	if(0 == m_inputdates.size())
@@ -589,6 +593,10 @@ void GetWeb::ctrl_work()
 				webinfo->buf = buf;
 				RecvData(webinfo);
 				sem_post(&m_sem_send);
+                if(m_savewebinfo)
+                {
+                    m_outdatemanager.AddOutdate(webinfo);
+                }
 				if(m_sendtomem)
 				{
 					AddWebinfoToMemcached(webinfo);

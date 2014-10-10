@@ -369,6 +369,7 @@ int ExtractUrlFromSo::getUrls(const char* src,size_t src_len,
     bool is_last = false;
     string temp_url;
 
+    urls.clear();
     while(!is_last)
     {
         if(extractUrl(src,src_len,*iter,is_last,temp_url,next_iter)==-1)
