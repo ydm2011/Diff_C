@@ -4,6 +4,7 @@ CONFIG -= app_bundle
 CONFIG -= qt
 QMAKE_CXXFLAGS += -std=c++11
 
+QT       += core gui
 SOURCES += main.cpp \
     util/util.cpp \
     memcached/encaplibmemcache.cpp \
@@ -26,7 +27,8 @@ INCLUDEPATH += /usr/local/libmemcached/include \
 
 
 
-LIBS += /usr/local/libmemcached/lib/libmemcached.so
+LIBS += /usr/local/libmemcached/lib/libmemcached.so \
+        -lpthread
 #LIBS += /usr/local/libmemcached/lib/libmemcached.so \
         #/usr/local/libmemcached/lib/libhashkit.so \
         #/usr/local/libmemcached/lib/libmemcachedutil.so

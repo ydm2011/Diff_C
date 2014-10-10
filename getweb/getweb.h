@@ -41,8 +41,8 @@
 #include <map>
 #include <fstream>
 
-#include "encaplibmemcache.h"
-#include "extractUrl.h"
+#include "memcached/encaplibmemcache.h"
+#include "extractUrl/extractUrl.h"
 #include "my_atomic.h"
 //#include "threadpool.h"
 //namespace GETWEBNAMESPACE
@@ -244,6 +244,24 @@ private:
 	
 };
 
+typedef struct engineparam
+{
+	engineparam()
+	:keyfilepath(""),urlfilepath(""),urlparam("")
+	,memcachedhostaddr(""),keynum(2000)
+	,HZ(10),sendtomemcached(false)
+	,port(80)
+	{}
+	string keyfilepath;
+	string urlfilepath;
+	int port;
+	string urlparam;
+	string memcachedhostaddr;
+	int keynum;
+	int  HZ;
+	bool sendtomemcached;
+}Engineparam;
+
 typedef list<string> UrlList;
 class GetWeb
 {
@@ -263,15 +281,16 @@ public:
 	GetWeb();
 	GetWeb(const GetWeb& other);
 	~GetWeb();
-	void init(string keyfile = "key.txt",string urlfile = "url.txt");
+	void init(Engineparam);
 	void run(int num);
 	void* PthreadFun(void *);
 	void master(int num);
 	
-	void ctrl_run(int num);
+	void ctrl_run(int num = -9);
 	void ctrl_master(int HZ );
 	void ctrl_work();
 	void sigalrm_handler(int sig);
+	inline bool finish() {return m_finished;}
 	inline OutDateMap& GetOutDate()
 	{return m_outdates;}
 	inline OutDateManager& GetOutDateManager()
@@ -321,8 +340,8 @@ private:
 	OutDateManager m_outdatemanager;
 	
 	EncapLibMemcached* m_pmemcached;
-	ExtractBySunday* m_pextract;
-	ExtractUrlFromSo* m_pextract_so; 
+	//ExtractBySunday* m_pextract;
+	//ExtractUrlFromSo* m_pextract_so; 
 	
 	pthread_mutex_t m_mutex_getwebinfo; 
 	pthread_rwlock_t m_out_rwlock;
@@ -333,9 +352,14 @@ private:
 	
 	string m_keyfilepath;
 	string m_urlfilepath;
+	string m_urlparam;
+	int m_port;
 	int m_HZ;
 	int m_num; //key worlds num;
 	my_atmic m_webinfonum;
+	
+	bool m_sendtomem;
+	bool m_finished;
 	//WebInfo* pwebinfo;
 	enum 
 	{

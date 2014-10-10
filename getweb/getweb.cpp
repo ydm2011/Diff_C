@@ -70,10 +70,10 @@ void _callsigal(int arg)
 GetWeb::GetWeb()
 	:m_outdatemanager()
 	,m_keyfilepath(""),m_urlfilepath("")
-	,m_webinfonum()
+	,m_webinfonum(),m_finished(false)
 {
 	//m_num = 4000;
-	init();
+	//init();
  
 }
 
@@ -89,17 +89,17 @@ GetWeb::~GetWeb()
 		delete m_pmemcached;
 		m_pmemcached = NULL;
 	}
-	if(!m_pextract_so)
-	{
-		delete m_pextract_so;
-		m_pextract_so = NULL;
-	}
-	if(!m_pextract)
-	{
-		delete m_pextract;
-		m_pextract = NULL;
-	}
-	
+// 	if(!m_pextract_so)
+// 	{
+// 		delete m_pextract_so;
+// 		m_pextract_so = NULL;
+// 	}
+// 	if(!m_pextract)
+// 	{
+// 		delete m_pextract;
+// 		m_pextract = NULL;
+// 	}
+// 	
 	
 }
 
@@ -137,6 +137,10 @@ void GetWeb::run(int num)
 	{
 		cout<<"create thread error\n";
 	}
+	sigset_t sigset;
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGALRM);
+	pthread_sigmask(SIG_SETMASK,&sigset,NULL);
 	(void)pthread_attr_destroy(&thread_attr);
 	//while(true)_threadmaster
 	//{}
@@ -144,11 +148,10 @@ void GetWeb::run(int num)
 
 void GetWeb::master(int num)
 {
-	//pthread_t thread1,thread2,thread3;
+	
 	typedef list<pthread_t*> ThreadList;
 	ThreadList threads;
-	//PthreadFun(this);
-	
+		
 	for(int i = 0; i < num; ++i)
 	{
 		pthread_t* pth = new pthread_t();
@@ -161,42 +164,26 @@ void GetWeb::master(int num)
 	{
 		pthread_join(**beg,NULL);
 	}
-	/*
-	pthread_create(&thread1, NULL, _call_thread1<GetWeb,&GetWeb::PthreadFun>,this);
-	pthread_create(&thread2, NULL, _call_thread1<GetWeb,&GetWeb::PthreadFun>,this);
-	pthread_create(&thread3, NULL, _call_thread1<GetWeb,&GetWeb::PthreadFun>,this);
-	pthread_join(thread1,NULL);
-	pthread_join(thread2,NULL);
-	pthread_join(thread3,NULL);
-	*/
+	
 }
 
-void GetWeb::init(string keyfile ,string urlfile )
+void GetWeb::init(Engineparam engparam )
 {
 	m_epollfd = epoll_create(MAX_EPOLL);
-	m_num = 4000;
-	m_keyfilepath = keyfile;
-	m_urlfilepath = urlfile;
-	/*	
-	string url = "www.so.com";
-	HostInfo temphost;
-	Gethost(url,temphost);
-	m_hosts.push_back(temphost);
-	*/
+	m_num = engparam.keynum;
+	m_keyfilepath = engparam.keyfilepath;
+	m_urlfilepath = engparam.urlfilepath;
+	m_urlparam = engparam.urlparam;
+	m_HZ = engparam.HZ;
+	m_sendtomem = engparam.sendtomemcached;
+	m_port = engparam.port;
+	
 	readkeyfile();
 	readurlfile();
 	inithostinfo();
+	
 	m_webinfonum = m_urls.size() * m_inputdates.size();
-	/*
-	int i = 4000;
-	InputDate temp;
-	while(i)
-	{
-		temp.key = "初始化";
-		m_inputdates.push_back(temp);
-		--i;
-	}
-	*/
+	
 	sem_init(&m_sem,0,1);
 	sem_init(&m_sem_recv,0,0);
 	sem_init(&m_sem_send,0,m_HZ);
@@ -216,14 +203,15 @@ void GetWeb::init(string keyfile ,string urlfile )
 	m_hostbeg = m_hosts.begin();
 	m_hostsend = m_hosts.end();
 	
-	string hostAddress = "--SERVER=test2.se.gzst.qihoo.net:11211";
-    MemManipulateParam testPara;
-    m_pmemcached = new EncapLibMemcached(hostAddress,testPara);
-	
-	m_pextract = new ExtractBySunday;
-    m_pextract_so = new ExtractUrlFromSo(m_pextract);
-	
-	
+	if(m_sendtomem)
+	{
+		string hostAddress = engparam.memcachedhostaddr;//"--SERVER=test2.se.gzst.qihoo.net:11211";
+		MemManipulateParam testPara;
+		m_pmemcached = new EncapLibMemcached(hostAddress,testPara);
+		
+		//m_pextract = new ExtractBySunday;
+		//m_pextract_so = new ExtractUrlFromSo(m_pextract);
+	}
 	
 }
 
@@ -321,11 +309,14 @@ void* GetWeb::PthreadFun(void*)
 			webinfo = static_cast<WebInfo*>(events[i].data.ptr);
 			if(events[i].events&EPOLLIN)
 			{
-			//threadpool_add_job(pool, _call_thread<GetWeb,&GetWeb::RecvData>,events[i].data.ptr);
 				webinfo->buf = buf;
 				RecvData(webinfo);
 				//AddPutDate(webinfo);
-				m_outdatemanager.AddOutdate(webinfo);
+				//m_outdatemanager.AddOutdate(webinfo);
+				if(m_sendtomem)
+				{
+					AddWebinfoToMemcached(webinfo);
+				}
 				first(1);
 			 //std::cout<<pwebinfo->pwebinfo<<std::endl;
 			}
@@ -333,14 +324,13 @@ void* GetWeb::PthreadFun(void*)
 			if(events[i].events&EPOLLOUT)
 			{
 				SendDate(events[i].data.ptr);
-				//DelEpoll(m_epollfd,webinfo->fd);
-				//SendDate(webinfo);
 				ModEpoll(m_epollfd,webinfo->hostinfo.fd,EPOLLIN,(WebInfo*)events[i].data.ptr);
 			}
 		}
 		
 	}
 	delete[] buf;
+	m_finished = true;
 	return NULL;
 }
 
@@ -384,7 +374,7 @@ void GetWeb::Gethost(string url, HostInfo& hostinfo)
     bzero(&cadd,sizeof(struct sockaddr_in));
     cadd.sin_family = AF_INET;
     cadd.sin_addr.s_addr = *((unsigned long*)pURL->h_addr_list[0]);
-    cadd.sin_port = htons(80);
+    cadd.sin_port = htons(m_port);
 	strcpy(hostinfo.GET,GET);
 	strcpy(hostinfo.host,host);
 	
@@ -463,20 +453,11 @@ bool GetWeb::AddWebinfoToMemcached(WebInfo* webinfo)
 	}
 	if(MEM_SUCCESS == res)
 	{
-		cout<<"addmemcached successed!"<<endl;
-		//char* pc = new char[webinfo->webinfo_len];
-		//memset(pc,'\0',webinfo->webinfo_len);
-		//std::shared_ptr<char> shared_pc;
-		//res = m_pmemcached->get(webinfo->key,shared_pc);
-		//if(MEM_SUCCESS == res)
-		//{
-		//	cout<<shared_pc<<endl;
-		//}
-		//delete[] pc;
 		return true; 
 	}
 	else
 	{
+		cout<<"addmemcached error!"<<endl;
 		return false;
 	}
 }
@@ -496,7 +477,7 @@ void GetWeb::ExtractWebinfo(WebInfo* webinfo, UrlList& urls)
 	{
 		pwebinfo = webinfo->pwebinfo;
 	}
-	m_pextract_so->getUrls(pwebinfo,webinfo->webinfo_len,"<h3",urls);
+	//m_pextract_so->getUrls(pwebinfo,webinfo->webinfo_len,"<h3",urls);
 }
 
 
@@ -516,9 +497,20 @@ void GetWeb::ctrl_first()
 
 void GetWeb::ctrl_run(int num)
 {
-	sem_init(&m_sem_recv,0,0);
-	sem_init(&m_sem_send,0,num);
-	
+	if(-9 == num && m_HZ >1)
+	{
+		sem_init(&m_sem_recv,0,0);
+		sem_init(&m_sem_send,0,m_HZ);
+	}
+	else if(num > 1)
+	{
+		sem_init(&m_sem_recv,0,0);
+		sem_init(&m_sem_send,0,num);
+	}
+	else
+	{
+		cout<<"param error\n";
+	}
 	pthread_t a_thread;
 	pthread_attr_t thread_attr;
 	int res = pthread_attr_init(&thread_attr);
@@ -562,10 +554,10 @@ void GetWeb::ctrl_master(int HZ )
 	ctrl_first();
 	signal(SIGALRM, _callsigal<GetWeb,&GetWeb::sigalrm_handler>);
 	Settimer(HZ);
-	while(true)
-	{
-		pause();
-	}
+// 	while(true)
+// 	{
+// 		pause();
+// 	}
 	pthread_join(a_thread,NULL);
 }
 
@@ -582,7 +574,7 @@ void GetWeb::ctrl_work()
 	int fds = 0;
 	char* buf = new char[RECVSIZE];
 	WebInfo* webinfo = NULL;
-	while(true && m_webinfonum.m_coun > 0)
+	while( m_webinfonum.m_coun > 0)
 	{
 		fds = 0;
 		while(!fds)
@@ -597,7 +589,10 @@ void GetWeb::ctrl_work()
 				webinfo->buf = buf;
 				RecvData(webinfo);
 				sem_post(&m_sem_send);
-				AddWebinfoToMemcached(webinfo);
+				if(m_sendtomem)
+				{
+					AddWebinfoToMemcached(webinfo);
+				}
 			}
 			
 			if(events[i].events&EPOLLOUT)
@@ -608,7 +603,9 @@ void GetWeb::ctrl_work()
 		}
 		
 	}
+	cout<<"work_thread over\n";
 	delete[] buf;
+	m_finished = true;
 	return ;
 }
 
@@ -860,7 +857,7 @@ void GetWeb::RecvData(void *arg)
 	{
 		std::cout<<webinfo->key<<"	fuck!\n";
 	}
-	std::cout<<"getwebinfo len "<<sumstrl/1024<<"KB	"<<cunn<<"\n";
+	std::cout<<"getwebinfo len "<<sumstrl/1024<<"KB	"<<m_webinfonum.m_coun<<"\n";
 	
 }
 

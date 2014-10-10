@@ -392,7 +392,7 @@ int ExtractUrlFromSo:: extractUrl(const char* src,
     size_t next_iter=0;
     int flag=-1;
     //loca the next list of the search result:<li class="res-list"
-    getSearchResultContainer(src,src_len,next_iter,node);
+    flag = getSearchResultContainer(src,src_len,next_iter,node);
     if (flag ==-1)
         return flag;
 
