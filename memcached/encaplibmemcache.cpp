@@ -63,10 +63,12 @@ void FreeNotByNew<FreeType>::operator ()(FreeType* instance)
 EncapLibMemcached::EncapLibMemcached(const string& configParameters,
                                      const MemManipulateParam& mmparam):manipuParam(mmparam){
     //initial the memcached_st smart pointer
-    //memcached_st* memc = memcached(configParameters.c_str(),configParameters.size());
-    shared_ptr<memcached_st> tempMemc(memcached(configParameters.c_str(),
-                                                configParameters.size()),
-                                      memcached_free);
+    memcached_st* memc = memcached(configParameters.c_str(),configParameters.size());
+    if(!memc)
+    {
+        cout<<"memcached connected failed!"<<endl;
+    }
+    shared_ptr<memcached_st> tempMemc(memc,memcached_free);
     smartMemcPointer = tempMemc;
 }
 /*

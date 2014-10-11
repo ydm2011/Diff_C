@@ -287,7 +287,7 @@ void ExtractUrlFromSo::init(const string& layer_tags,int layers)
     layer_nodes.clear();
     if (!parseLayerTag(layer_tags,layers,layer_nodes))
     {
-        cout<<"Wrong parameters in ExtractUrlFromBaidu::init() function"<<endl;
+        cout<<"Wrong parameters in ExtractUrlFromSo::init() function"<<endl;
     };
 }
 

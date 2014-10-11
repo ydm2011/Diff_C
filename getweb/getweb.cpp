@@ -70,7 +70,7 @@ void _callsigal(int arg)
 GetWeb::GetWeb()
 	:m_outdatemanager()
 	,m_keyfilepath(""),m_urlfilepath("")
-	,m_webinfonum(),m_finished(false)
+	,m_webinfonum(),m_finished(false),m_savewebinfo(false)
 {
 	//m_num = 4000;
 	//init();
@@ -79,7 +79,7 @@ GetWeb::GetWeb()
 
 GetWeb::GetWeb(const GetWeb& other)
 {
-    ;
+
 }
 
 GetWeb::~GetWeb()
@@ -124,7 +124,7 @@ void GetWeb::run(int num)
 	{
 		cout<<"attribute create failed\n";
 	}
-    res = pthread_attr_setdetxachstate(&thread_attr,PTHREAD_CREATE_DETACHED);
+	res = pthread_attr_setdetachstate(&thread_attr,PTHREAD_CREATE_DETACHED);
 	if(0 != res)
 	{
 		cout<<"setting detached attribute failed\n";
@@ -176,8 +176,8 @@ void GetWeb::init(Engineparam engparam )
 	m_urlparam = engparam.urlparam;
 	m_HZ = engparam.HZ;
 	m_sendtomem = engparam.sendtomemcached;
-    m_savewebinfo = engparam.savewebinfo;
 	m_port = engparam.port;
+	m_savewebinfo = engparam.savewebinfo;
 	
 	readkeyfile();
 	readurlfile();
@@ -298,7 +298,7 @@ void* GetWeb::PthreadFun(void*)
 	WebInfo* webinfo = NULL;
 	while(true&&m_webinfonum.m_coun > 0)
 	{
-		//first(fds);
+        //first(fds);true
 		fds = 0;
 		while(!fds)
 		{
@@ -313,10 +313,10 @@ void* GetWeb::PthreadFun(void*)
 				webinfo->buf = buf;
 				RecvData(webinfo);
 				//AddPutDate(webinfo);
-                if(m_savewebinfo)
-                {
-                    m_outdatemanager.AddOutdate(webinfo);
-                }
+				if(m_savewebinfo)
+				{
+					m_outdatemanager.AddOutdate(webinfo);
+				}
 				if(m_sendtomem)
 				{
 					AddWebinfoToMemcached(webinfo);
@@ -380,11 +380,11 @@ void GetWeb::Gethost(string url, HostInfo& hostinfo)
     cadd.sin_addr.s_addr = *((unsigned long*)pURL->h_addr_list[0]);
     cadd.sin_port = htons(m_port);
 	strcpy(hostinfo.GET,GET);
-    strcpy(hostinfo.host,host);
+	strcpy(hostinfo.host,host);
+	
 }
 
 WebInfo* GetWeb::GetWebinfo()
-
 {
 	MyLocalWLock mywlock(&m_webinfo_rwlock);
 	if(0 == m_inputdates.size())
@@ -593,10 +593,10 @@ void GetWeb::ctrl_work()
 				webinfo->buf = buf;
 				RecvData(webinfo);
 				sem_post(&m_sem_send);
-                if(m_savewebinfo)
-                {
-                    m_outdatemanager.AddOutdate(webinfo);
-                }
+				if(m_savewebinfo)
+				{
+					m_outdatemanager.AddOutdate(webinfo);
+				}
 				if(m_sendtomem)
 				{
 					AddWebinfoToMemcached(webinfo);
@@ -942,17 +942,41 @@ OutputdateList OutDateManager::GetWebinfoBykey(string key)
 bool OutDateManager::AddOutdate(WebInfo* webinfo)
 {
 	OutputDate temp;
-	temp.init(webinfo);
+	//temp.init(webinfo);
 	MyLocalWLock mylock(&m_rwlock);
 	m_outdates[webinfo->key].push_back(temp);
+	m_outdates[webinfo->key].back().init(webinfo);
 }
 
 bool OutDateManager::DelOutdate(string key)
 {
 	MyLocalWLock mylock(&m_rwlock); 
+	OutputdateList::iterator beg = m_outdates[key].begin();
+	OutputdateList::iterator end = m_outdates[key].end();
+	for(;beg != end; ++beg)
+	{
+		beg->relase();
+	}
 	return m_outdates.erase(key) > 0 ? true : false;
 }
 
+OutDateManager::~OutDateManager()
+{
+	OutDateMap::iterator begmap = m_outdates.begin();
+	OutDateMap::iterator endmap = m_outdates.end();
+	OutputdateList::iterator beg;
+	OutputdateList::iterator end;
+	for(;begmap != endmap; ++begmap)
+	{
+		beg = begmap->second.begin();
+		end = begmap->second.end();
+		for(;beg != end; ++beg)
+		{
+			beg->relase();
+		}
+	}
+	m_outdates.clear();
+}
 
 //}
 
