@@ -418,7 +418,7 @@ int ExtractUrlFromSo:: extractUrl(const char* src,
     }
     //get the loca of the "<h3"
     next_iter =0;
-    extract_obj->extractTag(src,src_len,"<h3",3,next_iter);
+    extract_obj->extractTag(src,src_len,"<h3 ",3,next_iter);
     //get the url location
     src += next_iter;
     src_len -= next_iter;

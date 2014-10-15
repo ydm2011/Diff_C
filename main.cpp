@@ -2,6 +2,7 @@
 #include "memcached/encaplibmemcache.h"
 #include "util/util.h"
 #include "getweb/getweb.h"
+#include "diff/diff.h"
 #include <iostream>
 #include <fstream>
 #include <ctime>
@@ -30,23 +31,27 @@ int upLoadMemcache(const string& query_key,
     return 0;
 }
 
+
+
 int main()
 {
     string query_path = "/home/daoming/QtProject/Diff_C/getweb/key.txt";
     string url_path = "/home/daoming/QtProject/Diff_C/getweb/url.txt";
-    string source_flag = "_360";
+    string source_flag1 = "_360";
+    string source_flag2 = "_baidu";
 
     // getweb configure
     Engineparam engineparam;
     engineparam.keyfilepath = query_path;
     engineparam.urlfilepath = url_path;
-    engineparam.keynum = 20;
+    engineparam.keynum = 500;
     engineparam.memcachedhostaddr = "--SERVER=test2.se.gzst.qihoo.net:11211";
     engineparam.sendtomemcached = false;
     engineparam.savewebinfo = true;
     engineparam.HZ = 10;
     engineparam.urlparam = "";
     engineparam.port = 80;
+
 
     gb.init(engineparam);
     gb.ctrl_run(10);
@@ -57,9 +62,15 @@ int main()
         sleep(1);
     }
 
-    //get the html contents init
-    OutputdateList datas;
-
+    map<string,int> host_names;
+    ifstream url_file;
+    url_file.open(url_path.c_str());
+    string temp_engine;
+    while(!url_file.eof())
+    {
+        url_file>>temp_engine;
+        host_names[temp_engine]=1;
+    }
     //extract the urls init
     ExtractContentInterface * algorithm = new ExtractBySunday;
     EncapLibMemcached mem(engineparam.memcachedhostaddr);
@@ -71,27 +82,64 @@ int main()
     query_file.open(query_path,ios::in|ios::binary);
 
     //store the extract urls
-    map<string,list<string> > key_urls;
-    list<string> urls;
+    map<string,list<string> > key_urls1;
+    map<string,list<string> > key_urls2;
+
+    //get the html contents init
+    OutputdateList datas;
     for(int i=0;i<engineparam.keynum; ++i)
     {
         query_file>>tmp_key;
+        //key_urls1
         datas = gb.GetOutDateManager().GetWebinfoBykey(tmp_key);
         for(OutputdateList::iterator beg = datas.begin();
             beg != datas.end(); ++beg)
         {
+            //if()
 
-            extract->getUrls(beg->pwebinfo,beg->webinfo_len,"<h3 ",urls);
-            upLoadMemcache(tmp_key,urls,source_flag,mem);
-            key_urls[tmp_key+source_flag] = urls;
+            extract->getUrls(beg->pwebinfo,beg->webinfo_len,"<h3 ",key_urls1[tmp_key]);
+            beg++;
+            extract->getUrls(beg->pwebinfo,beg->webinfo_len,"<h3 ",key_urls2[tmp_key]);
+            //upLoadMemcache(tmp_key,urls,source_flag,mem);
+            //key_urls1[tmp_key+source_flag1] = urls1;
+            //key_urls2[tmp_key+source_flag2] = urls2;
         }
     }
+    std::list<DiffCorresResult> diff_result;
+    diffSearch(key_urls1,key_urls2,diff_result);
+
+    ofstream out;
+    std::list<DiffCorresResult>:: iterator iter_diff = diff_result.begin();
+
+    map<string,list<string> > diff_urls1;
+    map<string,list<string> > diff_urls2;
+    for( ;iter_diff!=diff_result.end();++iter_diff)
+    {
+        diff_urls1[iter_diff->key] = key_urls1[iter_diff->key];
+        diff_urls2[iter_diff->key] = key_urls2[iter_diff->key];
+    }
+    out.open("current_360",ios::out);
+    mapToJson(diff_urls1,out);
+    out.close();
+
+    out.open("previous_360",ios::out);
+    mapToJson(diff_urls1,out);
+    out.close();
+
+    out.open("correspond",ios::out);
+    corrToJson(diff_result,out);
+    out.close();
+
+    DiffCorresResult  test_temp= diff_result.front();
+    list<string> test_urls;
+    test_urls = key_urls1[test_temp.key];
+    list<string> test_urls1;
+    test_urls1 = key_urls2[test_temp.key];
 
     //diff
-
+    
 
     //judge
-
 
 
     return 0;

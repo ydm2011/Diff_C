@@ -1,6 +1,10 @@
 #ifndef UTIL_H
 #define UTIL_H
 #include <ctime>
+#include <fstream>
+#include <map>
+#include <list>
+#include <diff/diff.h>
 class TimeStatcis
 {
 public:
@@ -18,5 +22,11 @@ inline bool is_character(char c)
         return true;
     return false;
 }
+
+
+//key value to json file
+int mapToJson(std::map<std::string, std::list<std::string> > &key_values, std::ofstream& out);
+int corrToJson(std::list<DiffCorresResult>& correspond,
+               std::ofstream& out);
 
 #endif // UTIL_H

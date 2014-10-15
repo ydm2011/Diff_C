@@ -9,15 +9,16 @@ SOURCES += main.cpp \
     util/util.cpp \
     memcached/encaplibmemcache.cpp \
     extractUrl/extractUrl.cpp \
-    getweb/getweb.cpp
+    getweb/getweb.cpp \
+    diff/diff.cpp
 
 HEADERS += \
     util/util.h \
     memcached/encaplibmemcache.h \
-    extractUrl/getDifferenceList.h \
     extractUrl/extractUrl.h \
     getweb/getweb.h \
-    getweb/my_atomic.h
+    getweb/my_atomic.h \
+    diff/diff.h
 
 
 

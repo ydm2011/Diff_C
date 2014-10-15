@@ -18,7 +18,7 @@
 //namespace GETWEBNAMESPACE
 //{
 
-int cunn = 0;
+
 template <typename TYPE, void (TYPE::*RecvData)(void*) > 
 void* _call_thread(void* arg)
 {
@@ -298,7 +298,7 @@ void* GetWeb::PthreadFun(void*)
 	WebInfo* webinfo = NULL;
 	while(true&&m_webinfonum.m_coun > 0)
 	{
-        //first(fds);true
+		//first(fds);
 		fds = 0;
 		while(!fds)
 		{
@@ -338,7 +338,7 @@ void* GetWeb::PthreadFun(void*)
 	return NULL;
 }
 
-void GetWeb::Gethost(string url, HostInfo& hostinfo)
+void GetWeb::Gethost(UrlInfo urlinf,HostInfo& hostinfo)
 {
 	int cfd = -1;
 	struct sockaddr_in& cadd = hostinfo.caadd;
@@ -355,7 +355,7 @@ void GetWeb::Gethost(string url, HostInfo& hostinfo)
     //分离主机中的主机地址和相对路径
     memset(myurl,'\0',BUFSIZE);
     memset(host,'\0',BUFSIZE);
-    strcpy(myurl,url.c_str());
+    strcpy(myurl,urlinf.url.c_str());
     for(pHost = myurl;*pHost != '/' && *pHost != '\0';++pHost);
 
     //获取相对路径保存到GET中
@@ -378,10 +378,12 @@ void GetWeb::Gethost(string url, HostInfo& hostinfo)
     bzero(&cadd,sizeof(struct sockaddr_in));
     cadd.sin_family = AF_INET;
     cadd.sin_addr.s_addr = *((unsigned long*)pURL->h_addr_list[0]);
-    cadd.sin_port = htons(m_port);
+    cadd.sin_port = htons(urlinf.port);
 	strcpy(hostinfo.GET,GET);
 	strcpy(hostinfo.host,host);
-	
+	hostinfo.url = urlinf.url;
+	hostinfo.com = urlinf.com;
+	hostinfo.param = urlinf.param;
 }
 
 WebInfo* GetWeb::GetWebinfo()
@@ -397,14 +399,18 @@ WebInfo* GetWeb::GetWebinfo()
 		if(m_hostsend == m_hostsitercur)
 		{
 			m_hostsitercur = m_hostbeg;
+			m_inputdates.pop_front();
+			if(0 == m_inputdates.size())
+			{
+				return NULL;
+			}
 		}
 		webinfo.hostinfo = *m_hostsitercur;
 		webinfo.key = m_inputdates.front().key;
 		webinfo.url = m_hostsitercur->url;
 		m_webinfos.push_back(webinfo);
-		m_inputdates.pop_front();
+		
 		++ m_hostsitercur;
-		++cunn;
 		return &m_webinfos.back();
 	}
 }
@@ -716,7 +722,8 @@ void GetWeb::SendDate(void* arg)
 	char request[BUFSIZE];
 	//char host[BUFSIZE],GET[BUFSIZE];
 	memset(request,0,BUFSIZE);
-	strcat(request,"GET /s?q=");//only www.so.com
+	strcat(request,"GET /s?");
+	strcat(request,pwebinfo->hostinfo.com.c_str());
 	//strcat(request,conif.GET);
 	strcat(request,+pwebinfo->key.c_str());
 	strcat(request," HTTP/1.1\r\n");//至此为http请求行的信息
@@ -864,7 +871,9 @@ void GetWeb::RecvData(void *arg)
 	if(0 == sumstrl)
 	{
 		std::cout<<webinfo->key<<"	fuck!\n";
+		//SendDate(webinfo);
 	}
+	std::cout<<"from "<<webinfo->hostinfo.url<<endl;
 	std::cout<<"getwebinfo len "<<sumstrl/1024<<"KB	"<<m_webinfonum.m_coun<<"\n";
 	
 }
@@ -877,12 +886,11 @@ void GetWeb::readkeyfile()
 	{
 		InputDate temp;
 		//int num = 4000;
-		m_inputdates.push_back(temp);
-		while(fin >> m_inputdates.back().key && m_num)
+		//m_inputdates.push_back(temp);
+		while(m_num)
 		{
-			if(fin.eof())
+			if(fin >> temp.key && fin.eof())
 			{
-				m_inputdates.pop_back();
 				break;
 			}
 			m_inputdates.push_back(temp);
@@ -899,11 +907,20 @@ void GetWeb::readurlfile()
 	{
 		UrlInfo temp;
 		string url;
-		while(fin>>url)
+		int port;
+		string com;
+		string param;
+		while(fin>>url>>port>>com>>param)
 		{
-			if("" != url)
+			if("" != url && port > 0)
 			{
 				temp.url = url;
+				temp.port = port;
+				temp.com = com;
+				if("NULL" == param)
+				{temp.param = "";}
+				else
+				{temp.param = param;}
 				m_urls.push_back(temp);
 			}
 		}
@@ -920,7 +937,7 @@ void GetWeb::inithostinfo()
 	for(;beg != end; ++beg)
 	{
 		cout<<beg->url<<endl;
-		Gethost(beg->url,temphost);
+		Gethost(*beg,temphost);
 		m_hosts.push_back(temphost);
 	}
 }

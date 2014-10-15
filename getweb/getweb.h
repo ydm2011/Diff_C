@@ -64,6 +64,8 @@ typedef struct hostinf
 	struct sockaddr_in caadd;
 	char GET[BUFSIZE];
 	char host[BUFSIZE];
+	string com;
+	string param;
 }HostInfo;
 
 
@@ -87,6 +89,8 @@ typedef struct urlinfo
 	urlinfo():port(80){};
 	string url;
 	int port ;
+	string com;
+	string param;
 }UrlInfo;
 
 class WebInfo
@@ -242,7 +246,8 @@ private:
 	OutDateManager& operator=(const OutDateManager& m);
 private:
 	pthread_rwlock_t m_rwlock;
-	OutDateMap m_outdates;	
+	OutDateMap m_outdates;
+	
 };
 
 typedef struct engineparam
@@ -314,7 +319,7 @@ private:
 	void RecvData(void *arg);
 	ssize_t socket_send(int fd, const char* buffer, size_t buflen,int param);
 	void CreatSocket(WebInfo* webinfo);
-	void Gethost(string url,HostInfo& hostinfo);
+	void Gethost(UrlInfo ,HostInfo& hostinfo);
 	WebInfo* GetWebinfo();
 	void Delwebinfo(WebInfo* webinfo);
 	void AddPutDate(WebInfo* webinfo);
