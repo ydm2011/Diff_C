@@ -35,7 +35,7 @@ int upLoadMemcache(const string& query_key,
 
 int main()
 {
-    string query_path = "/home/daoming/QtProject/Diff_C/getweb/key.txt";
+    string query_path = "/home/daoming/QtProject/Diff_C/getweb/queries";
     string url_path = "/home/daoming/QtProject/Diff_C/getweb/url.txt";
     string source_flag1 = "_360";
     string source_flag2 = "_baidu";
@@ -44,29 +44,33 @@ int main()
     Engineparam engineparam;
     engineparam.keyfilepath = query_path;
     engineparam.urlfilepath = url_path;
-    engineparam.keynum = 500;
+    engineparam.keynum = 2000;
     engineparam.memcachedhostaddr = "--SERVER=test2.se.gzst.qihoo.net:11211";
     engineparam.sendtomemcached = false;
     engineparam.savewebinfo = true;
     engineparam.HZ = 10;
     engineparam.urlparam = "";
     engineparam.port = 80;
-    engineparam.block = true;
+    engineparam.block = false;
 
     gb.init(engineparam);
-    gb.ctrl_run(10);
+    gb.ctrl_run(60);
     //gb.run(1);
-
-
-    map<string,int> host_names;
-    ifstream url_file;
-    url_file.open(url_path.c_str());
-    string temp_engine;
-    while(!url_file.eof())
+    while(!gb.finish())
     {
-        url_file>>temp_engine;
-        host_names[temp_engine]=1;
+        sleep(1);
     }
+
+    //map<string,int> host_names;
+    //ifstream url_file;
+    //url_file.open(url_path.c_str());
+    //string temp_engine;
+    //while(!url_file.eof())
+    //{
+     //   url_file>>temp_engine;
+      //  host_names[temp_engine]=1;
+    //}
+    //url_file.close();
     //extract the urls init
     ExtractContentInterface * algorithm = new ExtractBySunday;
     EncapLibMemcached mem(engineparam.memcachedhostaddr);
@@ -75,7 +79,7 @@ int main()
     //work
     ifstream query_file;
     string tmp_key;
-    query_file.open(query_path,ios::in|ios::binary);
+    query_file.open(query_path,ios::in);
 
     //store the extract urls
     map<string,list<string> > key_urls1;

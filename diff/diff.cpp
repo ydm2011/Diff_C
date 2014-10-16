@@ -42,8 +42,8 @@ int diffSearch(const MapUrlList &first_key_urls, MapUrlList &sec_key_urls, std::
 }
 
 //the core function
-int diffCorrespond(const list<string> urls1,
-                   const list<string> urls2,
+int diffCorrespond(const list<string>& urls1,
+                   const list<string>& urls2,
                    std::list<CorrRelation> &result)
 {
     if(urls1.empty()||urls2.empty())
@@ -63,7 +63,7 @@ int diffCorrespond(const list<string> urls1,
     result.clear();
     //get begining of the difference of the two versions;
     temp_relation.second_position = -1;
-    for(int i=0;iter1 != urls1_end,iter2 != urls2_end;++i,++iter1,++iter2)
+    for(int i=1;iter1 != urls1_end&&iter2 != urls2_end;++i,++iter1,++iter2)
     {
         if(iter1->compare(*iter2)!=0)
         {

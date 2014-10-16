@@ -45,8 +45,8 @@ int diffSearch(const MapUrlList& first_key_urls,
                 MapUrlList &sec_key_urls,
                std::list<DiffCorresResult>& result);
 //get the difference of the given list
-int diffCorrespond(const std::list<std::string> urls1,
-                   const std::list<std::string> urls2,
+int diffCorrespond(const std::list<std::string> &urls1,
+                   const std::list<std::string> &urls2,
                    std::list<CorrRelation> &result);
 
 int diffTop(const MapUrlList &key_urls1,

@@ -917,6 +917,7 @@ void GetWeb::readkeyfile()
 			m_inputdates.push_back(temp);
 			--m_num;
 		}
+        fin.close();
 	}
 }
 
@@ -945,6 +946,7 @@ void GetWeb::readurlfile()
 				m_urls.push_back(temp);
 			}
 		}
+        fin.close();
 	}
 	
 }
