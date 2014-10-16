@@ -51,16 +51,12 @@ int main()
     engineparam.HZ = 10;
     engineparam.urlparam = "";
     engineparam.port = 80;
-
+    engineparam.block = true;
 
     gb.init(engineparam);
     gb.ctrl_run(10);
     //gb.run(1);
 
-    while(!gb.finish())
-    {
-        sleep(1);
-    }
 
     map<string,int> host_names;
     ifstream url_file;
@@ -105,9 +101,10 @@ int main()
             //key_urls2[tmp_key+source_flag2] = urls2;
         }
     }
+    //get the diff
     std::list<DiffCorresResult> diff_result;
     diffSearch(key_urls1,key_urls2,diff_result);
-
+    //write json files;
     ofstream out;
     std::list<DiffCorresResult>:: iterator iter_diff = diff_result.begin();
 
@@ -118,28 +115,25 @@ int main()
         diff_urls1[iter_diff->key] = key_urls1[iter_diff->key];
         diff_urls2[iter_diff->key] = key_urls2[iter_diff->key];
     }
+    //all diff result
     out.open("current_360",ios::out);
     mapToJson(diff_urls1,out);
     out.close();
 
     out.open("previous_360",ios::out);
-    mapToJson(diff_urls1,out);
+    mapToJson(diff_urls2,out);
     out.close();
-
+    //all diff correspond
     out.open("correspond",ios::out);
     corrToJson(diff_result,out);
     out.close();
 
-    DiffCorresResult  test_temp= diff_result.front();
-    list<string> test_urls;
-    test_urls = key_urls1[test_temp.key];
-    list<string> test_urls1;
-    test_urls1 = key_urls2[test_temp.key];
+    //all diff TopN
+    //get all the topN urls
+    //map<int,list<Top> > topN1;
+    //map<int,list<Top> > topN2;
 
-    //diff
-    
-
-    //judge
+    //diffTop(key_urls1,key_urls2,diff_result,topN1,topN2);
 
 
     return 0;

@@ -255,7 +255,7 @@ typedef struct engineparam
 	engineparam()
 	:keyfilepath(""),urlfilepath(""),urlparam("")
 	,memcachedhostaddr(""),keynum(2000)
-	,HZ(10),sendtomemcached(false),savewebinfo(false)
+    ,HZ(10),sendtomemcached(false),savewebinfo(false),block(true)
 	,port(80)
 	{}
 	string keyfilepath;
@@ -267,6 +267,7 @@ typedef struct engineparam
 	int  HZ;
 	bool sendtomemcached;
 	bool savewebinfo;
+    bool block;
 }Engineparam;
 
 typedef list<string> UrlList;
@@ -304,7 +305,7 @@ public:
 	{return m_outdatemanager;}
 	inline OutDateManager* GetOutDateManagerPoint()
 	{return &m_outdatemanager;}
-	
+
 private:
 	GetWeb& operator=(const GetWeb& other);
 	bool operator==(const GetWeb& other);
@@ -365,7 +366,7 @@ private:
 	int m_HZ;
 	int m_num; //key worlds num;
 	my_atmic m_webinfonum;
-	
+    bool m_block;
 	bool m_sendtomem;
 	bool m_savewebinfo;
 	bool m_finished;

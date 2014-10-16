@@ -22,7 +22,7 @@
 
 using namespace std;
 
-int diffSearch(const MapUrlList &first_key_urls,  MapUrlList &sec_key_urls, std::list<DiffCorresResult> &result)
+int diffSearch(const MapUrlList &first_key_urls, MapUrlList &sec_key_urls, std::list<DiffCorresResult> &result)
 {
     map<string,list<string> >::const_iterator first_map_iter = first_key_urls.begin();
 
@@ -96,5 +96,98 @@ int diffCorrespond(const list<string> urls1,
     }
     return 0;
 }
+
+//get the every top n urls
+int diffTop(const MapUrlList &key_urls1,
+            const MapUrlList &key_urls2,
+            const list<DiffCorresResult> &diffCorres,
+            map<int,list<Top> >& topN1,
+            map<int,list<Top> >& topN2)
+{
+    //the relation list of the two different versions
+    list<DiffCorresResult>::const_iterator iter = diffCorres.begin();
+    list<DiffCorresResult>::const_iterator diff_end = diffCorres.end();
+    //all the difference urls iter
+    std::map<std::string,std::list<std::string> >::const_iterator map_iter1;
+    std::map<std::string,std::list<std::string> >::const_iterator map_iter2;
+    //the given key's urls
+    list<CorrRelation>::const_iterator iter_corr;
+
+    //the real urls iter;
+    std::list<string>::const_iterator urls_iter1;
+    std::list<string>::const_iterator urls_iter2;
+
+    int position;
+    Top temp_top1,temp_top2;
+    list<string> *temp_urls1 = &temp_top1.urls;
+    list<string> *temp_urls2 = &temp_top2.urls;
+
+    map<int,list<Top> >::iterator result_iter1;
+    map<int,list<Top> >::iterator result_iter2;
+
+    for( ; iter!= diff_end; ++iter)
+    {
+
+
+        iter_corr = iter->correspond.begin();//the diff relation list;
+
+        map_iter1 = key_urls1.find(iter->key);
+        map_iter2 = key_urls2.find(iter->key);
+        //the urls from the key_urls;
+        urls_iter1 = map_iter1->second.begin();
+        urls_iter2 = map_iter2->second.begin();
+
+        temp_top1.key = iter->key;
+        temp_top2.key = iter->key;
+
+        temp_urls1->clear();
+        temp_urls2->clear();
+        for( ; iter_corr != iter->correspond.end();++iter_corr)
+        {
+            position = iter_corr->first_position;
+            for(int i=0;i<position+1;i++)
+            {
+                temp_urls1->push_back(*urls_iter1);
+                temp_urls2->push_back(*urls_iter2);
+            }
+            topN1[position];
+            topN2[position];
+            result_iter1 = topN1.find(position);
+            result_iter2 = topN2.find(position);
+
+            result_iter1->second.push_back(temp_top1);
+            result_iter2->second.push_back(temp_top2);
+            temp_urls1->clear();
+            temp_urls2->clear();
+        }
+
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

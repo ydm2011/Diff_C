@@ -15,6 +15,8 @@ TimeStatcis::~TimeStatcis()
            test_term,
            double(time_eclipse/CLOCKS_PER_SEC));
 }
+
+//these function are ugly just accomplish the certain goals
 int corrToJson(std::list<DiffCorresResult>& correspond,
                std::ofstream& out)
 {
@@ -29,19 +31,18 @@ int corrToJson(std::list<DiffCorresResult>& correspond,
     out<<"{"<<"\"query\""<<":"
        <<"\""<<iter_diff->key<<"\""<<",";
     out<<"\""<<"correspond"<<"\""<<":";
-    out<<"[{";
+    out<<"[";
     iter_corr = iter_diff->correspond.begin();
-    out<<"\""<<"current"<<"\""<<":"<<iter_corr->first_position
-       <<",\""<<"previous"<<"\""<<":"<<iter_corr->second_position;
-    out<<"}";
+    out<<"["<<iter_corr->first_position
+       <<","<<iter_corr->second_position<<"]";
+    //out<<"]";
     iter_corr_end = iter_diff->correspond.end();
     ++iter_corr;
     for( ;iter_corr != iter_corr_end;++iter_corr)
     {
-        out<<",\""<<"{"
-           <<"\""<<"current"<<"\""<<":"<<iter_corr->first_position
-           <<",\""<<"previous"<<"\""<<":"<<iter_corr->second_position
-           <<"}";
+        out<<","
+           <<"["<<iter_corr->first_position
+           <<","<<iter_corr->second_position<<"]";
 
     }
     out<<"]}";
@@ -52,19 +53,19 @@ int corrToJson(std::list<DiffCorresResult>& correspond,
         out<<"\"query\""<<":"
            <<"\""<<iter_diff->key<<"\""<<",";
         out<<"\""<<"correspond"<<"\""<<":";
-        out<<"[{";
+        out<<"[";
         iter_corr = iter_diff->correspond.begin();
-        out<<"\""<<"current"<<"\""<<":"<<iter_corr->first_position
-           <<",\""<<"previous"<<"\""<<":"<<iter_corr->second_position;
-        out<<"}";
+        out<<"["<<iter_corr->first_position
+           <<","<<iter_corr->second_position<<"]";
+        //out<<"}";
         iter_corr_end = iter_diff->correspond.end();
         ++iter_corr;
         for( ;iter_corr != iter_corr_end;++iter_corr)
         {
-            out<<",\""<<"{"
-               <<"\""<<"current"<<"\""<<":"<<iter_corr->first_position
-               <<",\""<<"previous"<<"\""<<":"<<iter_corr->second_position
-               <<"}";
+            out<<","<<"["
+               <<iter_corr->first_position
+               <<","<<iter_corr->second_position
+               <<"]";
 
         }
         out<<"]}";
@@ -122,4 +123,47 @@ int mapToJson(std::map<std::string, std::list<std::string> >& key_values, std::o
     }
     out<<"]"<<endl;
     return 0;
+}
+
+
+int topToJsonNode(const Top& top,
+                  std::string& result)
+{
+    using namespace std;
+    result.clear();
+    result +="{\"query\":\"";
+    result +=top.key+"\",";
+    result +="\"url\":[";
+    list<string>::const_iterator iter = top.urls.begin();
+    list<string>::const_iterator iter_end = top.urls.end();
+    for( ;iter != iter_end; ++iter)
+    {
+        result += "\""+*iter+"\",";
+    }
+    result.pop_back();
+    result +="},";
+}
+
+//
+int mapTopToJson(const std::map<int,std::list<Top> > &top_n,std::ofstream& out)
+{
+    using namespace std;
+    if(top_n.empty())
+    {
+        cout<<"Empty paratemers in mapTopToJson:function!"<<endl;
+        return -1;
+    }
+    int top_num = top_n.size();
+
+    out<<"[[";
+    list<Top>::const_iterator top_iter;
+    map<int,list<Top> >::const_iterator map_iter;
+    string temp;
+    for(int i=0;i<top_num; i++)
+    {
+        map_iter = top_n.find(i);
+        top_iter = map_iter->second.begin();
+        topToJsonNode(*top_iter,temp);
+    }
+
 }

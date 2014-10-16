@@ -33,6 +33,11 @@ struct DiffCorresResult{
     std::list<CorrRelation> correspond;
 };
 
+struct Top{
+    std::string key;
+    std::list<std::string> urls;
+};
+
 typedef std::map<std::string,std::list<std::string> > MapUrlList;
 //return all the diff search result and return the change relations 
 //between the two versions;
@@ -43,4 +48,10 @@ int diffSearch(const MapUrlList& first_key_urls,
 int diffCorrespond(const std::list<std::string> urls1,
                    const std::list<std::string> urls2,
                    std::list<CorrRelation> &result);
+
+int diffTop(const MapUrlList &key_urls1,
+            const MapUrlList &key_urls2,
+            const std::list<DiffCorresResult> &diffCorres,
+            std::map<int,std::list<Top> >& topN1,
+            std::map<int,std::list<Top> >& topN2);
 #endif

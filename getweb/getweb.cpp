@@ -116,7 +116,11 @@ bool GetWeb::operator==(const GetWeb& other)
 
 void GetWeb::run(int num)
 {
-	
+    if(m_block)
+    {
+        master(num);
+        return;
+    }
 	pthread_t a_thread;
 	pthread_attr_t thread_attr;
 	int res = pthread_attr_init(&thread_attr);
@@ -164,7 +168,12 @@ void GetWeb::master(int num)
 	{
 		pthread_join(**beg,NULL);
 	}
-	
+    ThreadList::iterator delbeg = threads.begin();
+    for(;delbeg != end; ++delbeg)
+    {
+        if(!*delbeg)
+            {delete *delbeg;}
+    }
 }
 
 void GetWeb::init(Engineparam engparam )
@@ -178,7 +187,8 @@ void GetWeb::init(Engineparam engparam )
 	m_sendtomem = engparam.sendtomemcached;
 	m_port = engparam.port;
 	m_savewebinfo = engparam.savewebinfo;
-	
+    m_block = engparam.block;
+
 	readkeyfile();
 	readurlfile();
 	inithostinfo();
@@ -295,6 +305,8 @@ void* GetWeb::PthreadFun(void*)
 	first(60);
 	int fds = 0;
 	char* buf = new char[RECVSIZE];
+    if(!buf)
+    {return NULL;}
 	WebInfo* webinfo = NULL;
 	while(true&&m_webinfonum.m_coun > 0)
 	{
@@ -333,7 +345,11 @@ void* GetWeb::PthreadFun(void*)
 		}
 		
 	}
-	delete[] buf;
+    if(buf)
+    {
+        delete[] buf;
+        buf = NULL;
+    }
 	m_finished = true;
 	return NULL;
 }
@@ -521,6 +537,11 @@ void GetWeb::ctrl_run(int num)
 	{
 		cout<<"param error\n";
 	}
+    if(m_block)
+    {
+        ctrl_master(num);
+        return;
+    }
 	pthread_t a_thread;
 	pthread_attr_t thread_attr;
 	int res = pthread_attr_init(&thread_attr);
