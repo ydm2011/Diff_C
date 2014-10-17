@@ -31,4 +31,6 @@ int corrToJson(std::list<DiffCorresResult>& correspond,
 //std::string UriDecode(const std::string & sSrc);
 
 int topRateToJson(std::vector<double>& rate,std::string& json);
+//key value to json;
+int keyValueJson(std::list<std::string>& keys,std::list<std::string>& values,std::string& json);
 #endif // UTIL_H

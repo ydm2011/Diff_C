@@ -79,14 +79,27 @@ typedef struct
 
 
 
-typedef struct
+typedef struct inputdate
 {
-	string key;
+    inputdate():key(""){}
+    inputdate(string k):key(k)
+    {}
+    inputdate& operator &=(string k)
+    {
+        key = k;
+        return *this;
+    }
+    inputdate& operator &=(inputdate& k)
+    {
+        key = k.key;
+        return *this;
+    }
+    string key;
 }InputDate;
 
 typedef struct urlinfo
 {
-	urlinfo():port(80){};
+    urlinfo():port(80){}
 	string url;
 	int port ;
 	string com;
@@ -253,20 +266,28 @@ private:
 typedef struct engineparam
 {
 	engineparam()
-	:keyfilepath(""),urlfilepath(""),urlparam("")
+    :keyfilepath(""),urlfilepath("")
 	,memcachedhostaddr(""),keynum(2000)
+    ,testurlport(""),testcom(""),onlineurlport(""),onlinecom("")
     ,HZ(10),sendtomemcached(false),savewebinfo(false),block(true)
-	,port(80)
-	{}
+    ,readurlfile(false),readkeyfile(false)
+    {}
 	string keyfilepath;
 	string urlfilepath;
-	int port;
-	string urlparam;
+    string urlparam;
 	string memcachedhostaddr;
+
+    string testurlport;
+    string testcom;
+    string onlineurlport;
+    string onlinecom;
+    list<string> keys;
 	int keynum;
 	int  HZ;
 	bool sendtomemcached;
 	bool savewebinfo;
+    bool readurlfile;
+    bool readkeyfile;
     bool block;
 }Engineparam;
 
@@ -290,7 +311,7 @@ public:
 	GetWeb(const GetWeb& other);
 	~GetWeb();
 	void init(Engineparam);
-	void run(int num);
+    void run();
 	void* PthreadFun(void *);
 	void master(int num);
 	
@@ -333,8 +354,10 @@ private:
 	
 private:
 	void readkeyfile();
+    void readkey(list<string> keylist);
 	void readurlfile();
-	void inithostinfo();
+    void readurl(string& testurl, string& testcom, string&onlineurl, string onlinecom);
+    void inithostinfo();
 private:
 	int m_epollfd; //epollheadle
 	CharPointList m_charpoints;
@@ -351,7 +374,7 @@ private:
 	EncapLibMemcached* m_pmemcached;
 	//ExtractBySunday* m_pextract;
 	//ExtractUrlFromSo* m_pextract_so; 
-	
+
 	pthread_mutex_t m_mutex_getwebinfo; 
 	pthread_rwlock_t m_out_rwlock;
 	pthread_rwlock_t m_webinfo_rwlock;
@@ -365,8 +388,10 @@ private:
 	int m_port;
 	int m_HZ;
 	int m_num; //key worlds num;
-	my_atmic m_webinfonum;
+    my_atmic m_webinfonum;
     bool m_block;
+    bool m_readurlfile;
+    bool m_readkeyfile;
 	bool m_sendtomem;
 	bool m_savewebinfo;
 	bool m_finished;

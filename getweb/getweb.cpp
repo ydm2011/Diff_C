@@ -70,7 +70,7 @@ void _callsigal(int arg)
 GetWeb::GetWeb()
 	:m_outdatemanager()
 	,m_keyfilepath(""),m_urlfilepath("")
-	,m_webinfonum(),m_finished(false),m_savewebinfo(false)
+    ,m_webinfonum(),m_finished(false),m_savewebinfo(false)
 {
 	//m_num = 4000;
 	//init();
@@ -84,11 +84,11 @@ GetWeb::GetWeb(const GetWeb& other)
 
 GetWeb::~GetWeb()
 {
-	if(!m_pmemcached)
-	{
-		delete m_pmemcached;
-		m_pmemcached = NULL;
-	}
+    if(!m_pmemcached)
+    {
+        delete m_pmemcached;
+        m_pmemcached = NULL;
+    }
 // 	if(!m_pextract_so)
 // 	{
 // 		delete m_pextract_so;
@@ -114,11 +114,11 @@ bool GetWeb::operator==(const GetWeb& other)
 }
 
 
-void GetWeb::run(int num)
+void GetWeb::run()
 {
     if(m_block)
     {
-        master(num);
+        master(1);
         return;
     }
 	pthread_t a_thread;
@@ -134,7 +134,7 @@ void GetWeb::run(int num)
 		cout<<"setting detached attribute failed\n";
 		exit(-1);
 	}
-	MasterInfo masterinfo ={this,num};
+    MasterInfo masterinfo ={this,1};
 	res = pthread_create(&a_thread,&thread_attr,_threadmaster<MasterInfo,GetWeb,&GetWeb::master>,&masterinfo);
 	//res = pthread_create(&a_thread,NULL,_threadmaster<MasterInfo,GetWeb,&GetWeb::master>,&masterinfo);
 	if(0 != res)
@@ -146,8 +146,7 @@ void GetWeb::run(int num)
 	sigaddset(&sigset, SIGALRM);
 	pthread_sigmask(SIG_SETMASK,&sigset,NULL);
 	(void)pthread_attr_destroy(&thread_attr);
-	//while(true)_threadmaster
-	//{}
+
 }
 
 void GetWeb::master(int num)
@@ -174,6 +173,7 @@ void GetWeb::master(int num)
         if(!*delbeg)
             {delete *delbeg;}
     }
+    m_finished = true;
 }
 
 void GetWeb::init(Engineparam engparam )
@@ -185,12 +185,26 @@ void GetWeb::init(Engineparam engparam )
 	m_urlparam = engparam.urlparam;
 	m_HZ = engparam.HZ;
 	m_sendtomem = engparam.sendtomemcached;
-	m_port = engparam.port;
-	m_savewebinfo = engparam.savewebinfo;
+    m_savewebinfo = engparam.savewebinfo;
     m_block = engparam.block;
-
-	readkeyfile();
-	readurlfile();
+    m_readurlfile = engparam.readurlfile;
+    m_readkeyfile = engparam.readkeyfile;
+    if(m_readkeyfile)
+    {
+        readkeyfile();
+    }
+    else
+    {
+        readkey(engparam.keys);
+    }
+    if(m_readurlfile)
+    {
+        readurlfile();
+    }
+    else
+    {
+        readurl(engparam.testurlport,engparam.testcom,engparam.onlineurlport,engparam.onlinecom);
+    }
 	inithostinfo();
 	
 	m_webinfonum = m_urls.size() * m_inputdates.size();
@@ -210,15 +224,16 @@ void GetWeb::init(Engineparam engparam )
 	{
 		perror("rwlock initialization failed");
 	}
+
 	m_hostsitercur = m_hosts.begin();
 	m_hostbeg = m_hosts.begin();
 	m_hostsend = m_hosts.end();
 	
 	if(m_sendtomem)
 	{
-		string hostAddress = engparam.memcachedhostaddr;//"--SERVER=test2.se.gzst.qihoo.net:11211";
-		MemManipulateParam testPara;
-		m_pmemcached = new EncapLibMemcached(hostAddress,testPara);
+        string hostAddress = engparam.memcachedhostaddr;//"--SERVER=test2.se.gzst.qihoo.net:11211";
+        MemManipulateParam testPara;
+        m_pmemcached = new EncapLibMemcached(hostAddress,testPara);
 		
 		//m_pextract = new ExtractBySunday;
 		//m_pextract_so = new ExtractUrlFromSo(m_pextract);
@@ -274,9 +289,9 @@ void GetWeb::DelEpoll(int epollfd,int fd)
 
 int GetWeb::WaitEpoll(int epollfd, epoll_event* es, int size, int para)
 {
-	//sem_wait(&m_sem);
+    //sem_wait(&m_sem);
 	return epoll_wait(epollfd,es,size,para);
-	//sem_post(&m_sem);
+    //sem_post(&m_sem);
 }
 
 void GetWeb::first(int num)
@@ -301,26 +316,26 @@ void GetWeb::first(int num)
 
 void* GetWeb::PthreadFun(void*)
 {
-	struct epoll_event events[20];
+    struct epoll_event events[60];
 	first(60);
 	int fds = 0;
 	char* buf = new char[RECVSIZE];
     if(!buf)
     {return NULL;}
 	WebInfo* webinfo = NULL;
-	while(true&&m_webinfonum.m_coun > 0)
+    while(true&&m_webinfonum.m_coun > 0)
 	{
 		//first(fds);
-		fds = 0;
-		while(!fds)
+        fds = 0;
+        while(!fds)
 		{
 			fds = WaitEpoll(m_epollfd,events,sizeof(events)/sizeof(events[0]),100);
 			//fds = epoll_wait(m_epollfd,events,20,100);
 		}
-		for(int i = 0; i < fds; i++)
+        for(int i = 0; i < fds ; i++)
 		{
 			webinfo = static_cast<WebInfo*>(events[i].data.ptr);
-			if(events[i].events&EPOLLIN)
+            if(events[i].events&EPOLLIN)
 			{
 				webinfo->buf = buf;
 				RecvData(webinfo);
@@ -337,10 +352,10 @@ void* GetWeb::PthreadFun(void*)
 			 //std::cout<<pwebinfo->pwebinfo<<std::endl;
 			}
 			
-			if(events[i].events&EPOLLOUT)
+            if(events[i].events&EPOLLOUT)
 			{
 				SendDate(events[i].data.ptr);
-				ModEpoll(m_epollfd,webinfo->hostinfo.fd,EPOLLIN,(WebInfo*)events[i].data.ptr);
+                ModEpoll(m_epollfd,webinfo->hostinfo.fd,EPOLLIN,(WebInfo*)events[i].data.ptr);
 			}
 		}
 		
@@ -350,23 +365,19 @@ void* GetWeb::PthreadFun(void*)
         delete[] buf;
         buf = NULL;
     }
-	m_finished = true;
+
 	return NULL;
 }
 
 void GetWeb::Gethost(UrlInfo urlinf,HostInfo& hostinfo)
 {
-	int cfd = -1;
-	struct sockaddr_in& cadd = hostinfo.caadd;
+    struct sockaddr_in& cadd = hostinfo.caadd;
 	struct hostent *pURL = NULL;
     //int BUFSIZE = (int)malloc(2048);
     char myurl[BUFSIZE];
     char *pHost = 0;
     //char *pGET = 0;
     char host[BUFSIZE],GET[BUFSIZE];
-    char request[BUFSIZE];
-    static char text[BUFSIZE];
-    int i,j;
 
     //分离主机中的主机地址和相对路径
     memset(myurl,'\0',BUFSIZE);
@@ -376,7 +387,7 @@ void GetWeb::Gethost(UrlInfo urlinf,HostInfo& hostinfo)
 
     //获取相对路径保存到GET中
     memset(GET,0,BUFSIZE);
-    if((int)(pHost-myurl) == strlen(myurl))
+    if((unsigned int)(pHost-myurl) == strlen(myurl))
     {
          strcpy(GET,"/");//即url中没有给出相对路径，需要自己手动的在url尾部加上/
     }
@@ -466,26 +477,26 @@ bool GetWeb::AddWebinfoToMemcached(WebInfo* webinfo)
 	if(webinfo->buf)
 	{
 		string strweb(webinfo->buf,webinfo->webinfo_len);
-		res = m_pmemcached->set(webinfo->key,strweb);
+        res = m_pmemcached->set(webinfo->key,strweb);
 	}
 	else if(webinfo->pwebinfo)
 	{
 		string strweb(webinfo->pwebinfo,webinfo->webinfo_len);
-		res = m_pmemcached->set(webinfo->key,strweb);
+        res = m_pmemcached->set(webinfo->key,strweb);
 	}
 	else
 	{
 		return false;
 	}
-	if(MEM_SUCCESS == res)
-	{
-		return true; 
-	}
-	else
-	{
-		cout<<"addmemcached error!"<<endl;
-		return false;
-	}
+//    if(MEM_SUCCESS == res)
+//    {
+//        return true;
+//    }
+//    else
+//    {
+//        cout<<"addmemcached error!"<<endl;
+//        return false;
+//    }
 }
 
 void GetWeb::ExtractWebinfo(WebInfo* webinfo, UrlList& urls)
@@ -540,6 +551,7 @@ void GetWeb::ctrl_run(int num)
     if(m_block)
     {
         ctrl_master(num);
+        m_finished = true;
         return;
     }
 	pthread_t a_thread;
@@ -566,6 +578,7 @@ void GetWeb::ctrl_run(int num)
 	sigaddset(&sigset, SIGALRM);
 	pthread_sigmask(SIG_SETMASK,&sigset,NULL);
 	(void)pthread_attr_destroy(&thread_attr);
+    return;
 }
 /*
 void GetWeb::ctrl_RecvDate(void* arg)
@@ -584,12 +597,16 @@ void GetWeb::ctrl_master(int HZ )
 	}
 	ctrl_first();
 	signal(SIGALRM, _callsigal<GetWeb,&GetWeb::sigalrm_handler>);
-	Settimer(HZ);
+    Settimer(HZ);
 // 	while(true)
 // 	{
 // 		pause();
 // 	}
 	pthread_join(a_thread,NULL);
+    Settimer(1);
+    m_finished = true;
+    signal(SIGALRM,SIG_DFL);
+    return;
 }
 
 void GetWeb::ctrl_work()
@@ -698,14 +715,14 @@ void GetWeb::Connect(WebInfo* webinfo)
 		if(errno == EINPROGRESS)
 		{
 			//printf("connect ...\n");
-			AddEpoll(m_epollfd,cfd,EPOLLOUT,webinfo);
+            AddEpoll(m_epollfd,cfd,EPOLLOUT,webinfo);
 		}
 	}
     else
 	{
 		SendDate(webinfo);
 		//setnotblock(cfd);
-		ModEpoll(m_epollfd,cfd,EPOLLIN,webinfo);
+        ModEpoll(m_epollfd,cfd,EPOLLIN,webinfo);
 		//AddEpoll(m_epollfd,cfd,EPOLLIN,webinfo);
 		return;
 	}
@@ -738,8 +755,7 @@ void GetWeb::SendDate(void* arg)
 	int fd = pwebinfo->hostinfo.fd;
 	if(fd < 3)
 	{return;}
-	int len;  
-	// send data
+    // send data
 	char request[BUFSIZE];
 	//char host[BUFSIZE],GET[BUFSIZE];
 	memset(request,0,BUFSIZE);
@@ -758,7 +774,7 @@ void GetWeb::SendDate(void* arg)
 	if(-1 == (cs = socket_send(fd,request,strlen(request),0)))
 	{
 		printf("向服务器发送请求的request失败!\n");
-		exit(1);
+        exit(1);
 	}	
 }
 
@@ -802,8 +818,7 @@ void GetWeb::RecvData(void *arg)
 	int len = RECVSIZE-1;
 	int strl = -1;
 	int sumstrl = 0;
-	int rc = -1;
-	WebInfo* webinfo = (WebInfo*)arg;
+    WebInfo* webinfo = (WebInfo*)arg;
 	char* pc = webinfo->buf;
 	memset(pc,'\0',RECVSIZE);
 	int fd = webinfo->hostinfo.fd;
@@ -888,20 +903,21 @@ void GetWeb::RecvData(void *arg)
 	DelEpoll(m_epollfd,fd);
 	close(fd);
 	webinfo->webinfo_len = sumstrl;
-	--m_webinfonum;
+    //--m_webinfonum;
 	if(0 == sumstrl)
 	{
 		std::cout<<webinfo->key<<"	fuck!\n";
-		//SendDate(webinfo);
+        //SendDate(webinfo);
+       // std::cout<<"had resend "<<webinfo->key<<"to web\n";
 	}
 	std::cout<<"from "<<webinfo->hostinfo.url<<endl;
-	std::cout<<"getwebinfo len "<<sumstrl/1024<<"KB	"<<m_webinfonum.m_coun<<"\n";
+    std::cout<<"getwebinfo len "<<sumstrl/1024<<"KB	"<<(--m_webinfonum).m_coun<<"\n";
 	
 }
 
 void GetWeb::readkeyfile()
 {
-	ifstream fin(m_keyfilepath,ios::in);
+    ifstream fin(m_keyfilepath.c_str(),ios::in);
 	string key;
 	if(fin)
 	{
@@ -918,12 +934,17 @@ void GetWeb::readkeyfile()
 			--m_num;
 		}
         fin.close();
-	}
+    }
+}
+
+void GetWeb::readkey(list<string> keylist)
+{
+    m_inputdates.assign(keylist.begin(),keylist.end());
 }
 
 void GetWeb::readurlfile()
 {
-	ifstream fin(m_urlfilepath,ios::in);
+    ifstream fin(m_urlfilepath.c_str(),ios::in);
 	string url;
 	if(fin)
 	{
@@ -948,7 +969,22 @@ void GetWeb::readurlfile()
 		}
         fin.close();
 	}
-	
+
+}
+
+void GetWeb::readurl(string &testurl, string &testcom, string &onlineurl, string onlinecom)
+{
+   urlinfo temp;
+   temp.param = "";
+   temp.url = testurl.substr(0,testurl.find_first_of(":"));
+   temp.port = atoi(testurl.substr(testurl.find_first_of(":")+1).c_str());
+   temp.com = testcom;
+   m_urls.push_back(temp);
+   temp.url = onlineurl.substr(0,onlineurl.find_first_of(":"));
+   temp.port = atoi(onlineurl.substr(onlineurl.find_first_of(":")+1).c_str());
+   temp.com = onlinecom;
+   m_urls.push_back(temp);
+   return;
 }
 
 void GetWeb::inithostinfo()
@@ -986,6 +1022,7 @@ bool OutDateManager::AddOutdate(WebInfo* webinfo)
 	MyLocalWLock mylock(&m_rwlock);
 	m_outdates[webinfo->key].push_back(temp);
 	m_outdates[webinfo->key].back().init(webinfo);
+    return true;
 }
 
 bool OutDateManager::DelOutdate(string key)

@@ -215,7 +215,7 @@ int getChangeRate(std::list<DiffCorresResult>& diff_result, int key_num,std:: ve
     list<DiffCorresResult>::iterator iter_end = diff_result.end();
 
     list<CorrRelation>::iterator corr_iter;
-    int max;
+    int max=0;
     for( ; iter != iter_end; ++iter)
     {
         //cout<<topN[i].size();
@@ -264,5 +264,30 @@ int topRateToJson(std::vector<double>& rate,std::string& json)
     }
     json.pop_back();
     json +="]";
+}
+//key value json
+int keyValueJson(std::list<std::string>& keys,std::list<std::string>& values,std::string& json)
+{
+    using namespace std;
+    if(keys.empty()||values.empty()||keys.size()!=values.size())
+    {
+        cout<<"Invalid parameters in function:keyValueJson"<<endl;
+        return -1;
+    }
+
+    json += "[";
+    list<string>::iterator key_iter = keys.begin();
+    list<string>::iterator value_iter = values.begin();
+
+    for( ; key_iter != keys.end()&&value_iter != values.end(); ++key_iter,++value_iter)
+    {
+        json += "{\"";
+        json += *key_iter + "\":";
+        json += "\""+*value_iter +"\"";
+        json += "},";
+    }
+    json.pop_back();
+    json += "]";
+    return 0;
 }
 

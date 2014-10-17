@@ -51,17 +51,23 @@ int main(int argc, char** argv)
     engineparam.savewebinfo = true;
     engineparam.HZ = 10;
     engineparam.urlparam = "";
-    engineparam.port = 80;
+
     engineparam.block = false;
+    engineparam.readurlfile = true;
+    engineparam.testurlport = "www.so.com:80";
+    engineparam.testcom = "q=";
+    engineparam.onlineurlport = "www.so.com:80";
+    engineparam.onlinecom = "q=";
+    engineparam.readkeyfile = true;
 
     gb.init(engineparam);
     gb.ctrl_run(60);
     //gb.run(1);
-    /*while(!gb.finish())
+    while(!gb.finish())
     {
-        sleep(1);
+        ;//sleep(1);
     }
-    */
+
     //map<string,int> host_names;
     //ifstream url_file;
     //url_file.open(url_path.c_str());
@@ -142,16 +148,28 @@ int main(int argc, char** argv)
     map<int,list<Top> > topN2;
 
     //diffTop(key_urls1,key_urls2,diff_result,topN1,topN2);
+    //get engine to json;
 
+    string json;
+    list<string> engine;
+    list<string> engine_tag;
+    engine.push_back("http://www.so.com/s?src=srp&fr=360sou_home&cache=255&_api=srv2.safe.zzbc.qihoo.net:9501&q=");
+    engine.push_back("http://www.so.com/s?src=srp&fr=360sou_home&cache=255&_api=srv3.safe.zzbc.qihoo.net:9501&q=");
+
+    engine_tag.push_back("testUrl");
+    engine_tag.push_back("defaultUrl");
+    json +="[";
+    keyValueJson(engine_tag,engine,json);
+    json += ",";
+    //get rate to json
     vector<double> top_n_rate;
     getChangeRate(diff_result,engineparam.keynum,top_n_rate);
-    string rate_json;
-    topRateToJson(top_n_rate,rate_json);
-    test = key_urls1["崩坏学园2"];
-    test = key_urls1["对不起我爱你主题曲"];
-    test= key_urls1["哈雷摩托"];
 
-    test= key_urls1["pasta韩剧"];
+    topRateToJson(top_n_rate,json);
+    json += "]";
+    out.open("para",ios::out|ios::binary);
+    out<<json;
+    out.close();
     return 0;
 }
 
