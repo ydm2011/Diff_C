@@ -21,7 +21,7 @@
 #include <map>
 #include <string>
 #include <list>
-
+#include <vector>
 struct CorrRelation{
     CorrRelation():first_position(-1),second_position(-1){}
     int first_position;
@@ -56,7 +56,7 @@ int diffTop(const MapUrlList &key_urls1,
             std::map<int,std::list<Top> >& topN2);
 
 //get the rate of each top
-int getChangeRate(std::map<int,std::list<Top> >&topN,int key_num,std::list<double>& rate);
+int getChangeRate(std::list<DiffCorresResult>& diff_result, int key_num, std::vector<double> &rate);
 
 
 #endif

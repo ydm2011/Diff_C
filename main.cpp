@@ -35,6 +35,7 @@ int upLoadMemcache(const string& query_key,
 
 int main(int argc, char** argv)
 {
+
     string query_path = "/home/daoming/QtProject/Diff_C/getweb/queries";
     string url_path = "/home/daoming/QtProject/Diff_C/getweb/url.txt";//set by user
     string source_flag1 = "_360";
@@ -56,11 +57,11 @@ int main(int argc, char** argv)
     gb.init(engineparam);
     gb.ctrl_run(60);
     //gb.run(1);
-    while(!gb.finish())
+    /*while(!gb.finish())
     {
         sleep(1);
     }
-
+    */
     //map<string,int> host_names;
     //ifstream url_file;
     //url_file.open(url_path.c_str());
@@ -105,6 +106,8 @@ int main(int argc, char** argv)
             //key_urls2[tmp_key+source_flag2] = urls2;
         }
     }
+    list<string>test;
+
     //get the diff
     std::list<DiffCorresResult> diff_result;
     diffSearch(key_urls1,key_urls2,diff_result);
@@ -120,26 +123,35 @@ int main(int argc, char** argv)
         diff_urls2[iter_diff->key] = key_urls2[iter_diff->key];
     }
     //all diff result
-    out.open("current_360",ios::out);
+    out.open("current_360",ios::out|ios::binary);
     mapToJson(diff_urls1,out);
     out.close();
 
-    out.open("previous_360",ios::out);
+    out.open("previous_360",ios::out|ios::binary);
     mapToJson(diff_urls2,out);
     out.close();
     //all diff correspond
-    out.open("correspond",ios::out);
+    out.open("correspond",ios::out|ios::binary);
     corrToJson(diff_result,out);
     out.close();
 
+
     //all diff TopN
     //get all the topN urls
-    //map<int,list<Top> > topN1;
-    //map<int,list<Top> > topN2;
+    map<int,list<Top> > topN1;
+    map<int,list<Top> > topN2;
 
     //diffTop(key_urls1,key_urls2,diff_result,topN1,topN2);
 
+    vector<double> top_n_rate;
+    getChangeRate(diff_result,engineparam.keynum,top_n_rate);
+    string rate_json;
+    topRateToJson(top_n_rate,rate_json);
+    test = key_urls1["崩坏学园2"];
+    test = key_urls1["对不起我爱你主题曲"];
+    test= key_urls1["哈雷摩托"];
 
+    test= key_urls1["pasta韩剧"];
     return 0;
 }
 

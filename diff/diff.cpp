@@ -81,7 +81,7 @@ int diffCorrespond(const list<string>& urls1,
     vector<list<string>::const_iterator> ::iterator iter_diff = diff_iter.begin();
     list<CorrRelation>::iterator iter_res = result.begin();
     //get the position changing between the two versions
-    for( ;iter_res != result.end(),iter_diff!=diff_iter.end();++iter_res ,++iter_diff)
+    for( ;iter_res != result.end()&&iter_diff!=diff_iter.end();++iter_res ,++iter_diff)
     {
         iter2 = urls2.begin();
         iter1 = *iter_diff;
@@ -131,6 +131,7 @@ int diffTop(const MapUrlList &key_urls1,
 
         iter_corr = iter->correspond.begin();//the diff relation list;
 
+        //find the urls list  of the given top
         map_iter1 = key_urls1.find(iter->key);
         map_iter2 = key_urls2.find(iter->key);
         //the urls from the key_urls;

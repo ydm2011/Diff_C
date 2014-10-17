@@ -28,5 +28,7 @@ inline bool is_character(char c)
 int mapToJson(std::map<std::string, std::list<std::string> > &key_values, std::ofstream& out);
 int corrToJson(std::list<DiffCorresResult>& correspond,
                std::ofstream& out);
+//std::string UriDecode(const std::string & sSrc);
 
+int topRateToJson(std::vector<double>& rate,std::string& json);
 #endif // UTIL_H

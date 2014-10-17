@@ -21,6 +21,11 @@ int corrToJson(std::list<DiffCorresResult>& correspond,
                std::ofstream& out)
 {
     using namespace std;
+    if(correspond.empty())
+    {
+        cout<<"There are not difference between the two versions!"<<endl;
+        return 0;
+    }
     list<DiffCorresResult>::iterator iter_diff = correspond.begin();
     list<CorrRelation>::iterator iter_corr;
     list<CorrRelation>::iterator iter_corr_end;
@@ -86,37 +91,63 @@ int mapToJson(std::map<std::string, std::list<std::string> >& key_values, std::o
     map<string,list<string> >::iterator iter = key_values.begin();
     map<string,list<string> >::iterator iter_end = key_values.end();
 
+
     out<<"[";
     list<string>::iterator iter_value;
+    iter_value = iter->second.begin();
+    if(iter_value == iter->second.end())
+        return -1;
 
     string json_start= "{\"query\":";
 
     //the first
     out<<json_start<<"\""<<iter->first<<"\""<<",";
 
-    iter_value = iter->second.begin();
+
+    size_t bad_position=-1;
+    bad_position = iter_value->find("\r\n");
+    if(bad_position != -1)
+        iter_value->erase(bad_position,8);
     out<<"\""<<"result"<<"\""<<":"<<"["
        <<"\""<<*iter_value<<"\"";
     ++iter_value;
     for( ;iter_value!=iter->second.end();++iter_value)
     {
+        //iter_value->find_first_of('\\',)
+        bad_position = iter_value->find("\r\n");
+        if(bad_position != -1)
+            iter_value->erase(bad_position,8);
         out<<","<<"\""<<*iter_value<<"\"";
-        cout<<*iter_value<<endl;
+        //cout<<*iter_value<<endl;
     }
     out<<"]}";
 
     //the leaving items
     ++iter;
+    if(iter==iter_end)
+    {
+        out<<"]"<<endl;
+        return -1;
+    }
     for( ; iter != iter_end;++iter)
     {
+        iter_value = iter->second.begin();
+        if(iter_value ==iter->second.end())
+            continue;
+        bad_position = iter_value->find("\r\n");
+        if(bad_position != -1)
+            iter_value->erase(bad_position,8);
         out<<",\n"<<json_start<<"\""<<iter->first<<"\""<<",";
 
-        iter_value = iter->second.begin();
+
         out<<"\""<<"result"<<"\""<<":"<<"["
            <<"\""<<*iter_value<<"\"";
         ++iter_value;
         for( ;iter_value!=iter->second.end();++iter_value)
         {
+            bad_position = iter_value->find("\r\n");
+            if(bad_position != -1)
+                iter_value->erase(bad_position,8);
             out<<","<<"\""<<*iter_value<<"\"";
         }
         out<<"]}";
@@ -170,17 +201,68 @@ int mapTopToJson(const std::map<int,std::list<Top> > &top_n,std::ofstream& out)
 }
 
 //get the changing rate of each result item;
-int getChangeRate(std::map<int,std::list<Top> >&topN,int key_num,std::list<double>& rate)
+int getChangeRate(std::list<DiffCorresResult>& diff_result, int key_num,std:: vector<double>& rate)
 {
     using namespace std;
-    if(key_num ==0)
+    rate.resize(20);
+    if(key_num ==0||diff_result.empty())
     {
         cout<<"Wrong parameter in the getChangeRate: function! ";
         return -1;
     }
-    for(int i=1; i< topN.size()+1;i++)
+    //double change_num = 0;
+    list<DiffCorresResult>::iterator iter = diff_result.begin();
+    list<DiffCorresResult>::iterator iter_end = diff_result.end();
+
+    list<CorrRelation>::iterator corr_iter;
+    int max;
+    for( ; iter != iter_end; ++iter)
     {
-        rate.push_back(topN[i].size()/key_num);
+        //cout<<topN[i].size();
+        corr_iter = iter->correspond.begin();
+        rate[corr_iter->first_position] +=1;
+        if(max<corr_iter->first_position)
+        {
+            max = corr_iter->first_position;
+        }
+    }
+    vector<double>::iterator rate_iter = rate.begin();
+    rate.erase(rate_iter+max+1,rate_iter+rate.size());
+    rate_iter = rate.begin();
+    ++rate_iter;
+    for( ;rate_iter != rate.end(); ++rate_iter)
+    {
+        *rate_iter = (*rate_iter)/key_num +*(rate_iter-1);
+    }
+    rate_iter = rate.begin()+1;
+    for( ; rate_iter != rate.end(); ++rate_iter)
+    {
+         *rate_iter = 1-*rate_iter;
     }
     return 0;
 }
+//topRateToJson
+int topRateToJson(std::vector<double>& rate,std::string& json)
+{
+    using namespace std;
+    if(rate.empty())
+    {
+        std::cout<<"not element in rate!"<<endl;
+        return -1;
+    }
+    using namespace std;
+    string tag = "Top";
+    json += "[";
+    for(int i=1;i<rate.size();++i)
+    {
+        json += "{\"";
+        json += tag;
+        json +=to_string(i);
+        json += "\":";
+        json += to_string(rate[i]);
+        json += "},";
+    }
+    json.pop_back();
+    json +="]";
+}
+
