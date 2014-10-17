@@ -33,18 +33,18 @@ int upLoadMemcache(const string& query_key,
 
 
 
-int main()
+int main(int argc, char** argv)
 {
     string query_path = "/home/daoming/QtProject/Diff_C/getweb/queries";
-    string url_path = "/home/daoming/QtProject/Diff_C/getweb/url.txt";
+    string url_path = "/home/daoming/QtProject/Diff_C/getweb/url.txt";//set by user
     string source_flag1 = "_360";
-    string source_flag2 = "_baidu";
+    string source_flag2 = "_baidu";//set by user
 
     // getweb configure
     Engineparam engineparam;
     engineparam.keyfilepath = query_path;
     engineparam.urlfilepath = url_path;
-    engineparam.keynum = 2000;
+    engineparam.keynum = 2000;//set by user
     engineparam.memcachedhostaddr = "--SERVER=test2.se.gzst.qihoo.net:11211";
     engineparam.sendtomemcached = false;
     engineparam.savewebinfo = true;

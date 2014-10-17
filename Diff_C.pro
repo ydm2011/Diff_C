@@ -5,6 +5,7 @@ CONFIG -= qt
 QMAKE_CXXFLAGS += -std=c++11
 
 QT       += core gui
+
 SOURCES += main.cpp \
     util/util.cpp \
     memcached/encaplibmemcache.cpp \

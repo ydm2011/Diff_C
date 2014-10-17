@@ -74,7 +74,7 @@ int corrToJson(std::list<DiffCorresResult>& correspond,
     out<<"]"<<endl;
     return 0;
 }
-
+//write this to json
 int mapToJson(std::map<std::string, std::list<std::string> >& key_values, std::ofstream &out)
 {
     using namespace std;
@@ -142,6 +142,7 @@ int topToJsonNode(const Top& top,
     }
     result.pop_back();
     result +="},";
+    return 0;
 }
 
 //
@@ -165,5 +166,21 @@ int mapTopToJson(const std::map<int,std::list<Top> > &top_n,std::ofstream& out)
         top_iter = map_iter->second.begin();
         topToJsonNode(*top_iter,temp);
     }
+    return 0;
+}
 
+//get the changing rate of each result item;
+int getChangeRate(std::map<int,std::list<Top> >&topN,int key_num,std::list<double>& rate)
+{
+    using namespace std;
+    if(key_num ==0)
+    {
+        cout<<"Wrong parameter in the getChangeRate: function! ";
+        return -1;
+    }
+    for(int i=1; i< topN.size()+1;i++)
+    {
+        rate.push_back(topN[i].size()/key_num);
+    }
+    return 0;
 }

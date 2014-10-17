@@ -48,10 +48,15 @@ int diffSearch(const MapUrlList& first_key_urls,
 int diffCorrespond(const std::list<std::string> &urls1,
                    const std::list<std::string> &urls2,
                    std::list<CorrRelation> &result);
-
+//get the diff top
 int diffTop(const MapUrlList &key_urls1,
             const MapUrlList &key_urls2,
             const std::list<DiffCorresResult> &diffCorres,
             std::map<int,std::list<Top> >& topN1,
             std::map<int,std::list<Top> >& topN2);
+
+//get the rate of each top
+int getChangeRate(std::map<int,std::list<Top> >&topN,int key_num,std::list<double>& rate);
+
+
 #endif
