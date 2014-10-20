@@ -171,6 +171,8 @@ int topToJsonNode(const Top& top,
     {
         result += "\""+*iter+"\",";
     }
+    //string::iterator iter = result.end();
+    //result.erase(iter-1,iter);
     result.pop_back();
     result +="},";
     return 0;
@@ -290,4 +292,5 @@ int keyValueJson(std::list<std::string>& keys,std::list<std::string>& values,std
     json += "]";
     return 0;
 }
+//parse the commandline
 

@@ -36,7 +36,8 @@ int  ExtractBySunday::extractTag(const char* src,
                                  size_t& match_position)
 {
     list<size_t> match_locations;
-    getMatch(src,src_len,tag,tag_len,match_locations,ExtractBySunday::ONE);
+    if(getMatch(src,src_len,tag,tag_len,match_locations,ExtractBySunday::ONE)==-1)
+        return -1;
     if(match_locations.empty())
     {
         return -1;
@@ -89,6 +90,8 @@ int ExtractBySunday::getMatch(const char* src, size_t src_len,
     size_t current_start;
 
     int next_char;
+    if(src_len<pat_len)
+        return -1;
     while(src_iter<src_len - pat_len)
     {   
         current_start = src_iter;
@@ -103,6 +106,7 @@ int ExtractBySunday::getMatch(const char* src, size_t src_len,
             if(mode == ONE)
                return 0;
         }
+
         next_char = (int)src[src_iter+pat_len];
         if(character_position[next_char]==-1)
             src_iter += pat_len+1;

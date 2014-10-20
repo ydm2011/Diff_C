@@ -30,35 +30,60 @@ int upLoadMemcache(const string& query_key,
     }
     return 0;
 }
-
-
-
-int main(int argc, char** argv)
+//parse commadline
+bool getcomline(int argc,char** argv,Engineparam& engineparam)
 {
+    enum
+    {
+         COMLINESIZE = 8
+    };
 
-    string query_path = "/home/daoming/QtProject/Diff_C/getweb/queries";
-    string url_path = "/home/daoming/QtProject/Diff_C/getweb/url.txt";//set by user
+    if(argc != COMLINESIZE)
+    {
+        cout<<"param is Too much or too little\n";
+        return false;
+    }
+    string arrstring[COMLINESIZE];
+    for(int i = 0;i<argc;i++)
+    {
+        arrstring[i] = argv[i];
+    }
+    engineparam.keyfilepath = arrstring[5];
+    engineparam.urlfilepath = "url";
+    engineparam.keynum = atoi(arrstring[6].c_str());
+    engineparam.memcachedhostaddr = "--SERVER=test2.se.gzst.qihoo.net:11211";
+    engineparam.sendtomemcached = false;
+    engineparam.savewebinfo = true;
+    engineparam.HZ = atoi(arrstring[7].c_str());
+    engineparam.urlparam = "";
+    engineparam.block = false;
+    engineparam.readurlfile = false;
+    engineparam.testurlport = arrstring[1];
+    engineparam.testcom = arrstring[2];
+    engineparam.onlineurlport = arrstring[3];
+    engineparam.onlinecom = arrstring[4];
+    engineparam.readkeyfile = true;
+
+    return true;
+}
+
+
+
+int run(int argc, char** argv,const Engineparam& engineparam )
+{
+    /*if(argc<4)
+    {
+        cout<<"wrong parameters!"<<endl;
+        return -1;
+    }
+
+    */
+
     string source_flag1 = "_360";
     string source_flag2 = "_baidu";//set by user
 
     // getweb configure
-    Engineparam engineparam;
-    engineparam.keyfilepath = query_path;
-    engineparam.urlfilepath = url_path;
-    engineparam.keynum = 2000;//set by user
-    engineparam.memcachedhostaddr = "--SERVER=test2.se.gzst.qihoo.net:11211";
-    engineparam.sendtomemcached = false;
-    engineparam.savewebinfo = true;
-    engineparam.HZ = 10;
-    engineparam.urlparam = "";
-
-    engineparam.block = false;
-    engineparam.readurlfile = true;
-    engineparam.testurlport = "www.so.com:80";
-    engineparam.testcom = "q=";
-    engineparam.onlineurlport = "www.so.com:80";
-    engineparam.onlinecom = "q=";
-    engineparam.readkeyfile = true;
+    //Engineparam engineparam;
 
     gb.init(engineparam);
     gb.ctrl_run(60);
@@ -86,7 +111,7 @@ int main(int argc, char** argv)
     //work
     ifstream query_file;
     string tmp_key;
-    query_file.open(query_path,ios::in);
+    query_file.open(engineparam.keyfilepath.c_str(),ios::in);
 
     //store the extract urls
     map<string,list<string> > key_urls1;
@@ -153,8 +178,12 @@ int main(int argc, char** argv)
     string json;
     list<string> engine;
     list<string> engine_tag;
-    engine.push_back("http://www.so.com/s?src=srp&fr=360sou_home&cache=255&_api=srv2.safe.zzbc.qihoo.net:9501&q=");
-    engine.push_back("http://www.so.com/s?src=srp&fr=360sou_home&cache=255&_api=srv3.safe.zzbc.qihoo.net:9501&q=");
+    string testUri;
+    string defaultUrl;
+    testUri = string(argv[1]) + "/" + string(argv[2]);
+    defaultUrl = string(argv[3]) + "/" + string(argv[4]);
+    engine.push_back(testUri);
+    engine.push_back(defaultUrl);
 
     engine_tag.push_back("testUrl");
     engine_tag.push_back("defaultUrl");
@@ -173,6 +202,13 @@ int main(int argc, char** argv)
     return 0;
 }
 
+//the
+int main(int argc,char**argv)
+{
+    Engineparam engineparam;
+    getcomline(argc,argv,engineparam);
+    run(argc,argv,engineparam);
+}
 
 /*
 int main()
