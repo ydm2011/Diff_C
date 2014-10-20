@@ -86,7 +86,7 @@ int run(int argc, char** argv,const Engineparam& engineparam )
     //Engineparam engineparam;
 
     gb.init(engineparam);
-    gb.ctrl_run(60);
+    gb.ctrl_run(engineparam.HZ);
     //gb.run(1);
     while(!gb.finish())
     {

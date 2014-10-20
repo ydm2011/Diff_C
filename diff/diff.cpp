@@ -85,7 +85,7 @@ int diffCorrespond(const list<string>& urls1,
     {
         iter2 = urls2.begin();
         iter1 = *iter_diff;
-        for(int j=0 ;iter2 != urls2_end;++iter2,++j)
+        for(int j=1 ;iter2 != urls2_end;++iter2,++j)
         {
             if(iter1->compare(*iter2)==0)
             {
