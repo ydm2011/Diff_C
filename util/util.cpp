@@ -105,9 +105,19 @@ int mapToJson(std::map<std::string, std::list<std::string> >& key_values, std::o
 
 
     size_t bad_position=-1;
+    size_t bad_position_sec = -1;
     bad_position = iter_value->find("\r\n");
+    //bad_position_sec =-1;
     if(bad_position != -1)
-        iter_value->erase(bad_position,8);
+        bad_position_sec = iter_value->find("\r\n",bad_position+1);
+    if(bad_position != -1&&bad_position_sec != -1)
+    {
+        iter_value->erase(bad_position,bad_position_sec + 2 - bad_position);
+    }
+    if(bad_position != -1&&bad_position_sec ==-1)
+    {
+        iter_value->erase(bad_position,2);
+    }
     out<<"\""<<"result"<<"\""<<":"<<"["
        <<"\""<<*iter_value<<"\"";
     ++iter_value;
@@ -115,8 +125,17 @@ int mapToJson(std::map<std::string, std::list<std::string> >& key_values, std::o
     {
         //iter_value->find_first_of('\\',)
         bad_position = iter_value->find("\r\n");
+        bad_position_sec =-1;
         if(bad_position != -1)
-            iter_value->erase(bad_position,8);
+            bad_position_sec = iter_value->find("\r\n",bad_position+1);
+        if(bad_position != -1&&bad_position_sec != -1)
+        {
+            iter_value->erase(bad_position,bad_position_sec + 2 - bad_position);
+        }
+        if(bad_position != -1&&bad_position_sec ==-1)
+        {
+            iter_value->erase(bad_position,2);
+        }
         out<<","<<"\""<<*iter_value<<"\"";
         //cout<<*iter_value<<endl;
     }
@@ -135,8 +154,17 @@ int mapToJson(std::map<std::string, std::list<std::string> >& key_values, std::o
         if(iter_value ==iter->second.end())
             continue;
         bad_position = iter_value->find("\r\n");
+        bad_position_sec =-1;
         if(bad_position != -1)
-            iter_value->erase(bad_position,8);
+            bad_position_sec = iter_value->find("\r\n",bad_position+1);
+        if(bad_position != -1&&bad_position_sec != -1)
+        {
+            iter_value->erase(bad_position,bad_position_sec + 2 - bad_position);
+        }
+        if(bad_position != -1&&bad_position_sec ==-1)
+        {
+            iter_value->erase(bad_position,2);
+        }
         out<<",\n"<<json_start<<"\""<<iter->first<<"\""<<",";
 
 
@@ -146,8 +174,17 @@ int mapToJson(std::map<std::string, std::list<std::string> >& key_values, std::o
         for( ;iter_value!=iter->second.end();++iter_value)
         {
             bad_position = iter_value->find("\r\n");
+            bad_position_sec =-1;
             if(bad_position != -1)
-                iter_value->erase(bad_position,8);
+                bad_position_sec = iter_value->find("\r\n",bad_position+1);
+            if(bad_position != -1&&bad_position_sec != -1)
+            {
+                iter_value->erase(bad_position,bad_position_sec + 2 - bad_position);
+            }
+            if(bad_position != -1&&bad_position_sec ==-1)
+            {
+                iter_value->erase(bad_position,2);
+            }
             out<<","<<"\""<<*iter_value<<"\"";
         }
         out<<"]}";
